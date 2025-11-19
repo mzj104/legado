@@ -1,8 +1,11 @@
 package io.legado.app.ui.book.read.page
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Paint
+import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
@@ -42,6 +45,52 @@ class ContentTextView(context: Context, attrs: AttributeSet?) : View(context, at
             style = Paint.Style.FILL
         }
     }
+
+    var commentIcon: Bitmap? = null
+
+    data class CommentArea(val paragraph: Int, val rect: RectF)
+    private val commentAreas = mutableListOf<CommentArea>()
+
+    init {
+        // 原始图标
+        val raw = BitmapFactory.decodeResource(
+            resources,
+            R.drawable.ic_comment
+        )
+
+        // 缩放到 20dp
+        val size = 20.dpToPx()
+        commentIcon = Bitmap.createScaledBitmap(raw, size, size, true)
+    }
+
+    fun getCommentCountForParagraph(p: Int): Int {
+        // 之后你会真正联网获取，这里先写 2 做示例
+        return 8
+    }
+
+    // 存评论数
+    private val commentCountMap = mutableMapOf<Int, Int>()
+
+    fun setCommentCount(paragraph: Int, count: Int) {
+        commentCountMap[paragraph] = count
+        invalidate()
+    }
+
+    fun registerParagraphIcon(
+        paragraphNum: Int,
+        line: TextLine,
+        localX: Float,
+        localY: Float,
+        w: Int,
+        h: Int
+    ) {
+        val globalX = localX
+        val globalY = line.lineTop + localY
+
+        val rect = RectF(globalX, globalY, globalX + w, globalY + h)
+        commentAreas.add(CommentArea(paragraphNum, rect))
+    }
+
     private var callBack: CallBack
     private val visibleRect = ChapterProvider.visibleRect
     val selectStart = TextPos(0, -1, -1)
@@ -76,6 +125,8 @@ class ContentTextView(context: Context, attrs: AttributeSet?) : View(context, at
      * 设置内容
      */
     fun setContent(textPage: TextPage) {
+        commentAreas.clear()
+
         this.textPage = textPage
         // 非滑动翻页动画需要同步重绘，不然翻页可能会出现闪烁
         if (isScroll) {

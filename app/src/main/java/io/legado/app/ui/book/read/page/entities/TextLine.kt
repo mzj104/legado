@@ -2,7 +2,10 @@ package io.legado.app.ui.book.read.page.entities
 
 import android.annotation.SuppressLint
 import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
 import android.graphics.Paint.FontMetrics
+import android.graphics.RectF
 import android.os.Build
 import androidx.annotation.Keep
 import io.legado.app.help.PaintPool
@@ -174,6 +177,51 @@ data class TextLine(
         if (ReadBookConfig.underline && !isImage && ReadBook.book?.isImage != true) {
             drawUnderline(canvas)
         }
+        // ======== 段落结束时绘制评论按钮 ========
+// ======== 段落结束时绘制评论按钮 ========
+        if (isParagraphEnd && !isImage) {
+
+            val icon = view.commentIcon ?: return
+
+            // 图标右侧或末尾
+            val iconX = lineEnd + 8.dpToPx()
+            val iconY = (height - icon.height) / 2f
+
+            // 1) 绘制图标
+            canvas.drawBitmap(icon, iconX, iconY, null)
+
+            // 2) 绘制数字（评论数）
+            val count = view.getCommentCountForParagraph(paragraphNum)
+
+            if (count > 0) {
+                val paint = Paint().apply {
+                    color = Color.BLACK // 或者白色
+                    textSize = (icon.height * 0.6f)
+                    isAntiAlias = true
+                    textAlign = Paint.Align.CENTER
+                }
+
+                val centerX = iconX + icon.width / 2f
+                val centerY = iconY + icon.height / 2f - (paint.ascent() + paint.descent()) / 2f
+
+                canvas.drawText(count.toString(), centerX, centerY, paint)
+            }
+
+            // 3) 注册点击区域
+            view.registerParagraphIcon(
+                paragraphNum,
+                this,
+                iconX,
+                iconY,
+                icon.width,
+                icon.height
+            )
+        }
+
+
+
+// ==========================================
+
     }
 
     @SuppressLint("NewApi")
