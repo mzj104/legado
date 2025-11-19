@@ -8,6 +8,7 @@ import android.graphics.Paint.FontMetrics
 import android.graphics.RectF
 import android.os.Build
 import androidx.annotation.Keep
+import io.legado.app.help.CommentManager
 import io.legado.app.help.PaintPool
 import io.legado.app.help.book.isImage
 import io.legado.app.help.config.AppConfig
@@ -183,38 +184,39 @@ data class TextLine(
 
             val icon = view.commentIcon ?: return
 
-            // 图标右侧或末尾
-            val iconX = lineEnd + 8.dpToPx()
+            val screenWidth = view.width.toFloat()
+            val marginRight = 16.dpToPx().toFloat()
+            var iconX = lineEnd + 8.dpToPx()
             val iconY = (height - icon.height) / 2f
+            if (iconX + icon.width + marginRight > screenWidth) {
+                iconX = screenWidth - icon.width - marginRight
+            }
 
-            // 1) 绘制图标
+            val count = CommentManager.getCommentCountForParagraph(
+                view.textPage.chapterIndex,  // 当前章节
+                paragraphNum                 // 当前段落
+            )
+            if (count == 0) return
             canvas.drawBitmap(icon, iconX, iconY, null)
 
-            // 2) 绘制数字（评论数）
-            val count = view.getCommentCountForParagraph(paragraphNum)
-
-            if (count > 0) {
-                val paint = Paint().apply {
-                    color = Color.BLACK // 或者白色
-                    textSize = (icon.height * 0.6f)
-                    isAntiAlias = true
-                    textAlign = Paint.Align.CENTER
-                }
-
-                val centerX = iconX + icon.width / 2f
-                val centerY = iconY + icon.height / 2f - (paint.ascent() + paint.descent()) / 2f
-
-                canvas.drawText(count.toString(), centerX, centerY, paint)
+            val paint = Paint().apply {
+                color = Color.BLACK // 或者白色
+                textSize = (icon.height * 0.6f)
+                isAntiAlias = true
+                textAlign = Paint.Align.CENTER
             }
+
+            val centerX = iconX + icon.width / 2f
+            val centerY = iconY + icon.height / 2f - (paint.ascent() + paint.descent()) / 2f
+
+            canvas.drawText(count.toString(), centerX, centerY, paint)
 
             // 3) 注册点击区域
             view.registerParagraphIcon(
-                paragraphNum,
-                this,
-                iconX,
-                iconY,
-                icon.width,
-                icon.height
+                view.textPage.chapterIndex,   // 当前章节 index
+                paragraphNum,                 // 当前段落 index
+                this, iconX, iconY,
+                icon.width, icon.height
             )
         }
 

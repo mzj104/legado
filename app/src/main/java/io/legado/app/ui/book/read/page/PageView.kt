@@ -3,6 +3,7 @@ package io.legado.app.ui.book.read.page
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.drawable.LayerDrawable
+import android.util.Log
 import android.view.LayoutInflater
 import android.widget.FrameLayout
 import androidx.core.content.ContextCompat
@@ -315,6 +316,7 @@ class PageView(context: Context) : FrameLayout(context) {
      * 设置内容
      */
     fun setContent(textPage: TextPage, resetPageOffset: Boolean = true) {
+        Log.d("MYINFO", "textPage: $textPage")
         if (isMainView && !isScroll) {
             setProgress(textPage)
         } else {

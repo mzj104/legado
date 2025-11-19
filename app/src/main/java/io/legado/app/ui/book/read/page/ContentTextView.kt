@@ -7,12 +7,17 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.RectF
 import android.util.AttributeSet
+import android.util.Log
 import android.view.MotionEvent
 import android.view.View
+import androidx.appcompat.app.AppCompatActivity
 import io.legado.app.R
 import io.legado.app.data.entities.Bookmark
+import io.legado.app.help.QdCat.get_review
+import io.legado.app.help.Simicatalog.get_qdchapter_id
 import io.legado.app.help.config.AppConfig
 import io.legado.app.model.ReadBook
+import io.legado.app.ui.book.read.ReviewBottomSheet
 import io.legado.app.ui.book.read.page.delegate.PageDelegate
 import io.legado.app.ui.book.read.page.entities.TextLine
 import io.legado.app.ui.book.read.page.entities.TextPage
@@ -30,6 +35,10 @@ import io.legado.app.utils.dpToPx
 import io.legado.app.utils.getCompatColor
 import io.legado.app.utils.showDialogFragment
 import io.legado.app.utils.toastOnUi
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.concurrent.Executors
 import kotlin.math.max
 import kotlin.math.min
@@ -48,14 +57,18 @@ class ContentTextView(context: Context, attrs: AttributeSet?) : View(context, at
 
     var commentIcon: Bitmap? = null
 
-    data class CommentArea(val paragraph: Int, val rect: RectF)
+    data class CommentArea(
+        val chapterIndex: Int,
+        val paragraphIndex: Int,
+        val rect: RectF            // 图标的全局坐标区域
+    )
     private val commentAreas = mutableListOf<CommentArea>()
 
     init {
         // 原始图标
         val raw = BitmapFactory.decodeResource(
             resources,
-            R.drawable.ic_comment
+            R.drawable.icon
         )
 
         // 缩放到 20dp
@@ -65,7 +78,7 @@ class ContentTextView(context: Context, attrs: AttributeSet?) : View(context, at
 
     fun getCommentCountForParagraph(p: Int): Int {
         // 之后你会真正联网获取，这里先写 2 做示例
-        return 8
+        return p
     }
 
     // 存评论数
@@ -77,7 +90,8 @@ class ContentTextView(context: Context, attrs: AttributeSet?) : View(context, at
     }
 
     fun registerParagraphIcon(
-        paragraphNum: Int,
+        chapterIndex: Int,
+        paragraphIndex: Int,
         line: TextLine,
         localX: Float,
         localY: Float,
@@ -87,9 +101,15 @@ class ContentTextView(context: Context, attrs: AttributeSet?) : View(context, at
         val globalX = localX
         val globalY = line.lineTop + localY
 
-        val rect = RectF(globalX, globalY, globalX + w, globalY + h)
-        commentAreas.add(CommentArea(paragraphNum, rect))
+        commentAreas.add(
+            CommentArea(
+                chapterIndex,
+                paragraphIndex,
+                RectF(globalX, globalY, globalX + w, globalY + h)
+            )
+        )
     }
+
 
     private var callBack: CallBack
     private val visibleRect = ChapterProvider.visibleRect
@@ -276,12 +296,32 @@ class ContentTextView(context: Context, attrs: AttributeSet?) : View(context, at
         }
     }
 
+    fun get_para_review(chapterIndex: Int, paragraphIndex: Int){
+        val page = this.textPage        // 当前页
+        val title = page.title          // 当前章节标题
+        val cid = get_qdchapter_id("",chapterIndex)
+        Log.d(
+            "MYCOMMENT",
+            "点击图标: chapter=${chapterIndex}, paragraph=${paragraphIndex}, title=${title}, cid=${cid}"
+        )
+        val fm = (context as AppCompatActivity).supportFragmentManager
+
+        // 立即打开弹窗（里面会自动加载）
+        ReviewBottomSheet(chapterIndex, paragraphIndex)
+            .show(fm, "reviewDialog")
+    }
     /**
      * 单击
      * @return true:已处理, false:未处理
      */
     @Suppress("UNUSED_ANONYMOUS_PARAMETER")
     fun click(x: Float, y: Float): Boolean {
+        for (area in commentAreas) {
+            if (area.rect.contains(x, y)) {
+                get_para_review(area.chapterIndex, area.paragraphIndex)
+                return true   // ← 阻止继续执行翻页逻辑
+            }
+        }
         var handled = false
         touch(x, y) { _, textPos, textPage, textLine, column ->
             when (column) {

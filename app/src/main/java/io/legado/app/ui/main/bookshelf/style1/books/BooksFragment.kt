@@ -2,6 +2,7 @@ package io.legado.app.ui.main.bookshelf.style1.books
 
 import android.annotation.SuppressLint
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.view.ViewConfiguration
 import androidx.core.view.isGone
@@ -22,6 +23,7 @@ import io.legado.app.data.appDb
 import io.legado.app.data.entities.Book
 import io.legado.app.data.entities.BookGroup
 import io.legado.app.databinding.FragmentBooksBinding
+import io.legado.app.help.QdCat
 import io.legado.app.help.config.AppConfig
 import io.legado.app.lib.theme.accentColor
 import io.legado.app.lib.theme.primaryColor
@@ -239,6 +241,10 @@ class BooksFragment() : BaseFragment(R.layout.fragment_books),
     }
 
     override fun open(book: Book) {
+        Log.d("MYCOMMENT", "点击书籍：${book.name}")
+        Log.d("MYCOMMENT", "书源：${book.originName}")
+        Log.d("MYCOMMENT", "URL：${book.bookUrl}")
+        QdCat.get_mulu("1035420986")
         startActivityForBook(book)
     }
 

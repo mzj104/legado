@@ -5,6 +5,7 @@ import android.graphics.Rect
 import android.os.Build
 import android.text.Layout
 import android.text.TextPaint
+import io.legado.app.utils.dpToPx
 import java.util.WeakHashMap
 import kotlin.math.max
 

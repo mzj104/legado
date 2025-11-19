@@ -1,15 +1,25 @@
 package io.legado.app.ui.book.read.page.entities
 
 
+import android.util.Log
 import androidx.annotation.Keep
 import io.legado.app.data.entities.Book
 import io.legado.app.data.entities.BookChapter
 import io.legado.app.data.entities.ReplaceRule
+import io.legado.app.help.ApiClient.fetchCommentCounts
+import io.legado.app.help.CommentManager
+import io.legado.app.help.QdCat
+import io.legado.app.help.Simicatalog
 import io.legado.app.help.book.BookContent
+import io.legado.app.model.ReadBook
+import io.legado.app.ui.book.read.ReadBookActivity
 import io.legado.app.ui.book.read.page.provider.LayoutProgressListener
 import io.legado.app.ui.book.read.page.provider.TextChapterLayout
 import io.legado.app.utils.fastBinarySearchBy
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.math.abs
 import kotlin.math.min
 
@@ -29,6 +39,34 @@ data class TextChapter(
     //起效的替换规则
     val effectiveReplaceRules: List<ReplaceRule>?
 ) : LayoutProgressListener {
+
+    init {
+        fun matchAndLoadComments() {
+            val qdId = Simicatalog.get_qdchapter_id(title, chapter.index)
+            if (qdId == null) return
+
+            CoroutineScope(Dispatchers.IO).launch {
+                val result = fetchCommentCounts(qdId)
+                CommentManager.putChapterComments(chapter.index, result)
+
+                // 刷新页面（触发重新布局+绘制）
+                withContext(Dispatchers.Main) {
+                    ReadBook.callBack?.upContent()
+                }
+            }
+        }
+
+        if (QdCat.isReady()) {
+            Log.d("BESTMATCH", "起点目录已就绪 → 立即匹配 第${chapter.index}章 ${title}")
+            matchAndLoadComments()
+
+        } else {
+            Log.d("BESTMATCH", "起点目录未就绪 → 注册监听 第${chapter.index}章 ${title}")
+            QdCat.addOnReadyListener {
+                matchAndLoadComments()
+            }
+        }
+    }
 
     private val textPages = arrayListOf<TextPage>()
     val pages: List<TextPage> get() = textPages

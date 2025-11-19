@@ -45,6 +45,8 @@ import java.util.Locale
  */
 @Suppress("DEPRECATION", "ConstPropertyName")
 object ChapterProvider {
+    val iconW = 24.dpToPx()
+    val iconMargin = 8.dpToPx()
     //用于图片字的替换
     const val srcReplaceChar = "▩"
 
@@ -1013,7 +1015,7 @@ object ChapterProvider {
         visibleWidth = if (doublePage) {
             viewWidth / 2 - paddingLeft - paddingRight
         } else {
-            viewWidth - paddingLeft - paddingRight
+            viewWidth - paddingLeft - paddingRight - iconW
         }
         //留1dp画最后一行下划线
         visibleHeight = viewHeight - paddingTop - paddingBottom
@@ -1042,7 +1044,7 @@ object ChapterProvider {
         visibleWidth = if (doublePage) {
             viewWidth / 2 - paddingLeft - paddingRight
         } else {
-            viewWidth - paddingLeft - paddingRight
+            viewWidth - paddingLeft - paddingRight - iconW
         }
         //留1dp画最后一行下划线
         visibleHeight = viewHeight - paddingTop - paddingBottom
