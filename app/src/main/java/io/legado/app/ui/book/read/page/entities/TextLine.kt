@@ -201,7 +201,7 @@ data class TextLine(
 
             val paint = Paint().apply {
                 color = Color.BLACK // 或者白色
-                textSize = (icon.height * 0.6f)
+                textSize = (icon.height * 0.5f)
                 isAntiAlias = true
                 textAlign = Paint.Align.CENTER
             }

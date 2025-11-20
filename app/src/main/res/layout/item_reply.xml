@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="horizontal"
+    android:paddingStart="0dp"
+    android:paddingEnd="0dp"
+    android:paddingTop="8dp">
+
+
+
+    <!-- 子评论内容区 -->
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_marginStart="8dp"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1">
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical">
+
+            <!-- 子评论头像（缩小一点） -->
+            <ImageView
+                android:id="@+id/imgReplyAvatar"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_marginEnd="8dp" />
+        <!-- 子评论昵称 -->
+            <TextView
+                android:id="@+id/tvReplyUser"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="#444444"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+
+        </LinearLayout>
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <!-- 子评论内容 -->
+            <TextView
+                android:id="@+id/tvReplyContent"
+                android:textSize="14sp"
+                android:layout_marginTop="0dp"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/layoutLike"
+                android:layout_marginEnd="30dp" />
+
+            <!-- 点赞区（靠右固定 20dp） -->
+            <LinearLayout
+                android:id="@+id/layoutLike"
+                android:orientation="vertical"
+                android:gravity="center_horizontal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="20dp"
+                app:layout_constraintTop_toTopOf="@+id/tvReplyContent"
+                app:layout_constraintEnd_toEndOf="parent">
+
+                <ImageView
+                    android:id="@+id/imgThumb"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_thumb_up"/>
+
+                <TextView
+                    android:id="@+id/subtvLike"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="123"
+                    android:textSize="12sp"
+                    android:layout_marginTop="2dp"/>
+            </LinearLayout>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+        <!-- 子评论时间 -->
+        <TextView
+            android:id="@+id/tvReplyTime"
+            android:textSize="12sp"
+            android:textColor="#999999"
+            android:layout_marginTop="4dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+    </LinearLayout>
+
+</LinearLayout>

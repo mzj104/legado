@@ -216,4 +216,79 @@ object QdCat
         }
     }
 
+    suspend fun get_sub_review(rootId: String): JSONArray {
+        val token = "wMKJcrrSW7SvDuZv7w7OaKjf0XtM1C092s9vSuRu"
+        val tsfp = "ltvuV0MF2utBvS0Q76jgkUytFDAufT84h0wpEaR0f5thQLErU5mD049/ucj/OHza4cxnvd7DsZoyJTLYCJI3dwNCRpmUcIwV2gXFmoMlj4xFV0FiQMjeUANNdrghvWYUKHhCNxS00jA8eIUd379yilkMsyN1zap3TO14fstJ019E6KDQmI5uDW3HlFWQRzaLbjcMcuqPr6g18L5a5TuP7Q/+L1MiBL9B1EPG1XodWy53tETvfbpdPRmud5j5SqA="
+        val urlString = "https://www.qidian.com/webcommon/chapterreview/quotereviewlist?reviewId=$rootId&page=1&pageSize=100&_csrfToken=$token"
+        Log.d("COMMENT", "urlString: $urlString")
+        val url = URL(urlString)
+        try {
+            // 创建连接
+            val connection = url.openConnection() as HttpURLConnection
+            connection.requestMethod = "GET"
+
+            // 设置请求头
+            connection.setRequestProperty("Accept", "application/json, text/plain, */*")
+            connection.setRequestProperty("Accept-Encoding", "gzip, deflate, br, zstd")
+            connection.setRequestProperty(
+                "Accept-Language",
+                "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"
+            )
+            connection.setRequestProperty("Connection", "keep-alive")
+            connection.setRequestProperty("Cookie", "_csrfToken=$token; w_tsfp=$tsfp")
+            connection.setRequestProperty("Host", "www.qidian.com")
+            connection.setRequestProperty("Sec-Fetch-Dest", "empty")
+            connection.setRequestProperty("Sec-Fetch-Mode", "cors")
+            connection.setRequestProperty("Sec-Fetch-Site", "same-origin")
+            connection.setRequestProperty(
+                "User-Agent",
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0"
+            )
+            connection.setRequestProperty("X-D", "0")
+            connection.setRequestProperty(
+                "sec-ch-ua",
+                "\"Chromium\";v=\"142\", \"Microsoft Edge\";v=\"142\", \"Not_A Brand\";v=\"99\""
+            )
+            connection.setRequestProperty("sec-ch-ua-mobile", "?0")
+            connection.setRequestProperty("sec-ch-ua-platform", "\"Windows\"")
+
+            // 获取响应
+            val responseCode = connection.responseCode
+            Log.e("COMMENT", "HTTP 状态码: $responseCode")
+
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+                // 读取响应内容
+                val inputStream = connection.inputStream
+                val reader = BufferedReader(InputStreamReader(inputStream))
+                val response = StringBuilder()
+                var line: String?
+
+                while (reader.readLine().also { line = it } != null) {
+                    response.append(line)
+                }
+
+                val body = response.toString()
+
+                Log.e("COMMENT", "服务器返回原始内容 >>>")
+                Log.e("COMMENT", body)
+                Log.e("COMMENT", "<<< 原始内容结束")
+
+                // 解析 JSON 响应
+                val json = JSONObject(body).getJSONObject("data").getJSONArray("list")
+
+                Log.e("COMMENT1", "=== 单个评论完成 ===")
+                Log.e("COMMENT1", json.toString())
+
+                return json
+            } else {
+                Log.e("COMMENT", "HTTP 请求失败，状态码: $responseCode")
+                return JSONArray()
+            }
+        } catch (e: Exception) {
+            Log.e("COMMENT", "评论获取失败: ${e.message}")
+            e.printStackTrace()
+            return JSONArray()
+        }
+    }
+
 }
