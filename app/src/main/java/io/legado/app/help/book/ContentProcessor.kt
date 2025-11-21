@@ -1,6 +1,7 @@
 package io.legado.app.help.book
 
 import android.os.Build
+import android.util.Log
 import io.legado.app.constant.AppLog
 import io.legado.app.constant.AppPattern.spaceRegex
 import io.legado.app.data.appDb
@@ -8,6 +9,8 @@ import io.legado.app.data.entities.Book
 import io.legado.app.data.entities.BookChapter
 import io.legado.app.data.entities.ReplaceRule
 import io.legado.app.exception.RegexTimeoutException
+import io.legado.app.help.Simicatalog.keepAfterFirstSpace
+import io.legado.app.help.Simicatalog.removeChapterTitle
 import io.legado.app.help.config.AppConfig
 import io.legado.app.help.config.ReadBookConfig
 import io.legado.app.utils.ChineseUtils
@@ -98,7 +101,7 @@ class ContentProcessor private constructor(
         reSegment: Boolean = true
     ): BookContent {
         var mContent = content
-        var sameTitleRemoved = false
+        var sameTitleRemoved = true
         var effectiveReplaceRules: ArrayList<ReplaceRule>? = null
         if (content != "null") {
             //去除重复标题
@@ -200,7 +203,14 @@ class ContentProcessor private constructor(
                 }
             }
         }
-        return BookContent(sameTitleRemoved, contents, effectiveReplaceRules)
+        val text1 = removeChapterTitle(keepAfterFirstSpace(contents[0]))
+        val title2 = removeChapterTitle(keepAfterFirstSpace(chapter.title))
+        if (text1 == title2) {
+            Log.d("去除重复",text1+"  "+title2)
+            return BookContent(sameTitleRemoved, contents.drop(1), effectiveReplaceRules)
+        }
+        else
+            return BookContent(sameTitleRemoved, contents, effectiveReplaceRules)
     }
 
 }

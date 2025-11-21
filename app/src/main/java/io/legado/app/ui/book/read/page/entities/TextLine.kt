@@ -192,11 +192,12 @@ data class TextLine(
                 iconX = screenWidth - icon.width - marginRight
             }
 
-            val count = CommentManager.getCommentCountForParagraph(
+            var count = CommentManager.getCommentCountForParagraph(
                 view.textPage.chapterIndex,  // 当前章节
                 paragraphNum                 // 当前段落
             )
             if (count == 0) return
+            if (count > 999) count = 999 // 避免过多评论
             canvas.drawBitmap(icon, iconX, iconY, null)
 
             val paint = Paint().apply {

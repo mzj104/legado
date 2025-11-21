@@ -349,7 +349,7 @@ data class TextChapter(
     companion object {
         val emptyTextChapter = TextChapter(
             BookChapter(), -1, "emptyTextChapter", -1,
-            sameTitleRemoved = false,
+            sameTitleRemoved = true,
             isVip = false,
             isPay = false,
             null

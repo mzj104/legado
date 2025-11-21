@@ -9,6 +9,7 @@ import android.content.pm.ActivityInfo
 import android.content.pm.ApplicationInfo
 import android.content.res.Configuration
 import android.os.Build
+import android.util.Log
 import com.github.liuyueyi.quick.transfer.constants.TransType
 import com.jeremyliao.liveeventbus.LiveEventBus
 import com.jeremyliao.liveeventbus.logger.DefaultLogger
@@ -20,6 +21,7 @@ import io.legado.app.constant.AppConst.channelIdDownload
 import io.legado.app.constant.AppConst.channelIdReadAloud
 import io.legado.app.constant.AppConst.channelIdWeb
 import io.legado.app.constant.PreferKey
+import io.legado.app.data.AppDatabase
 import io.legado.app.data.appDb
 import io.legado.app.data.entities.Book
 import io.legado.app.data.entities.BookChapter
@@ -36,6 +38,7 @@ import io.legado.app.help.CrashHandler
 import io.legado.app.help.DefaultData
 import io.legado.app.help.DispatchersMonitor
 import io.legado.app.help.LifecycleHelp
+import io.legado.app.help.QdCat.parseResultList
 import io.legado.app.help.RuleBigDataHelp
 import io.legado.app.help.book.BookHelp
 import io.legado.app.help.config.AppConfig
@@ -54,6 +57,8 @@ import io.legado.app.utils.LogUtils
 import io.legado.app.utils.defaultSharedPreferences
 import io.legado.app.utils.getPrefBoolean
 import io.legado.app.utils.isDebuggable
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.chromium.base.ThreadUtils
 import splitties.init.appCtx
@@ -61,6 +66,7 @@ import splitties.systemservices.notificationManager
 import java.net.URL
 import java.util.concurrent.TimeUnit
 import java.util.logging.Level
+
 
 class App : Application() {
 
@@ -119,6 +125,21 @@ class App : Application() {
             //同步阅读记录
             if (AppConfig.syncBookProgress) {
                 AppWebDav.downloadAllBookProgress()
+            }
+        }
+        GlobalScope.launch(Dispatchers.IO) {
+            try {
+                // ⭐ 使用全局单例 appDb（你的工程已经提供）
+                val bookDao = appDb.bookDao
+
+                val books = bookDao.all    // @get:Query("SELECT * FROM books")
+                val titles = books.map { it.name }
+
+                Log.e("LEGADOBOOKNAME", "书架书名: $titles")
+                for (title in titles)
+                    parseResultList(title)
+            } catch (e: Exception) {
+                Log.e("LEGADOBOOKNAME", "读取失败: ${e.message}")
             }
         }
     }

@@ -13,7 +13,7 @@ object ApiClient {
     suspend fun fetchCommentCounts(chapterId: String): Map<String, Int> =
         withContext(Dispatchers.IO) {
             // 替换为实际的 bookId 和 chapterId
-            val bookId = "1035420986"  // 假设 bookId 固定，你可以根据需要修改
+            val bookId = QdCat.nowqdbookid  // 假设 bookId 固定，你可以根据需要修改
             val token = getCsrfToken()  // 获取 CSRF Token
             val cid = chapterId
             Log.d("COMMENT", "chapterId: $chapterId, cid: $cid")

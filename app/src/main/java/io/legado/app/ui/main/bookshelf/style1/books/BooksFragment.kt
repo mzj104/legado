@@ -24,6 +24,7 @@ import io.legado.app.data.entities.Book
 import io.legado.app.data.entities.BookGroup
 import io.legado.app.databinding.FragmentBooksBinding
 import io.legado.app.help.QdCat
+import io.legado.app.help.QdCat.parseResultList
 import io.legado.app.help.config.AppConfig
 import io.legado.app.lib.theme.accentColor
 import io.legado.app.lib.theme.primaryColor
@@ -37,6 +38,7 @@ import io.legado.app.utils.startActivity
 import io.legado.app.utils.startActivityForBook
 import io.legado.app.utils.viewbindingdelegate.viewBinding
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.catch
@@ -244,8 +246,12 @@ class BooksFragment() : BaseFragment(R.layout.fragment_books),
         Log.d("MYCOMMENT", "点击书籍：${book.name}")
         Log.d("MYCOMMENT", "书源：${book.originName}")
         Log.d("MYCOMMENT", "URL：${book.bookUrl}")
-        QdCat.get_mulu("1035420986")
         startActivityForBook(book)
+        GlobalScope.launch(Dispatchers.IO) {
+            var bookid = parseResultList(book.name)
+            QdCat.nowqdbookid = bookid.toString()
+            QdCat.get_mulu(bookid)
+        }
     }
 
     override fun openBookInfo(book: Book) {

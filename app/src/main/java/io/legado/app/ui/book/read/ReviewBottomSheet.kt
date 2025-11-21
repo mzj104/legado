@@ -11,6 +11,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import io.legado.app.help.QdCat
 import io.legado.app.help.QdCat.get_review
 import io.legado.app.help.ReviewThread
 import io.legado.app.help.Simicatalog
@@ -99,9 +100,8 @@ class ReviewBottomSheet(
     private fun loadReviews(header: TextView) {
 
         CoroutineScope(Dispatchers.IO).launch {
-
             val qdId = Simicatalog.get_qdchapter_id("", chapterIndex)
-            val rawArr = get_review("1035420986", qdId, paragraphIndex - 1)
+            val rawArr = get_review(QdCat.nowqdbookid, qdId, paragraphIndex - 1)
 
             val threads = MutableList(rawArr.length()) { i ->
                 ReviewThread(rawArr.getJSONObject(i))

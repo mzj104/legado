@@ -1,5 +1,6 @@
 package io.legado.app.help.book
 
+import android.util.Log
 import io.legado.app.data.entities.ReplaceRule
 
 data class BookContent(

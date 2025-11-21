@@ -12,33 +12,33 @@ import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
+import java.net.URLEncoder
+import java.util.concurrent.ConcurrentHashMap
 
 object QdCat
 {
     private var qdcatalog = JSONArray()
+    var nowqdbookid = ""
     private var ready = false
     fun isReady() = ready
+    private var qdidmap = ConcurrentHashMap<String, String>()
     private val listeners = mutableListOf<() -> Unit>()
-
     fun addOnReadyListener(listener: () -> Unit) {
         listeners.add(listener)
         if (ready) {
             listener()
         }
     }
-
     private fun notifyReady() {
         ready = true
         listeners.forEach { it() }
         listeners.clear()
     }
-
     fun getQdcatalog(): JSONArray
     {
         return qdcatalog
     }
-
-    fun get_mulu(bookId: String) {
+    fun get_mulu(bookId: String?) {
         CoroutineScope(Dispatchers.IO).launch {
             Log.d("BESTMATCH", "目录获取开始")
             try {
@@ -47,6 +47,7 @@ object QdCat
                     "ltvuV0MF2utBvS0Q76jgkUytFDAufT84h0wpEaR0f5thQLErU5mD049/ucj/OHza4cxnvd7DsZoyJTLYCJI3dwNCRpmUcIwV2gXFmoMlj4xFV0FiQMjeUANNdrghvWYUKHhCNxS00jA8eIUd379yilkMsyN1zap3TO14fstJ019E6KDQmI5uDW3HlFWQRzaLbjcMcuqPr6g18L5a5TuP7Q/+L1MiBL9B1EPG1XodWy53tETvfbpdPRmud5j5SqA="
 
                 val url = "https://www.qidian.com/book/$bookId/"
+                Log.d("BESTMATCH", "请求 URL: $url")
                 // 设置请求头
                 val headers = mapOf(
                     "Accept" to "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
@@ -288,6 +289,88 @@ object QdCat
             Log.e("COMMENT", "评论获取失败: ${e.message}")
             e.printStackTrace()
             return JSONArray()
+        }
+    }
+
+    suspend fun parseResultList(name: String): String? {
+        if (qdidmap.containsKey(name)){
+            Log.d("MYSEARCH", "🎉 存在记录！title=$name, bid=${qdidmap[name]}")
+            return qdidmap[name]
+        }
+        val token = "eV3kXa9RiAUTFzWfCMiDu0nxGTxfTbDbLptN2BqV"
+        val tsfp =
+            "ltvuV0MF2utBvS0Q76jgkUytFDAufT84h0wpEaR0f5thQLErU5mD049/ucj/OHza4cxnvd7DsZoyJTLYCJI3dwNCRpmUcIwV2gXFmoMlj4xFV0FiQMjeUANNdrghvWYUKHhCNxS00jA8eIUd379yilkMsyN1zap3TO14fstJ019E6KDQmI5uDW3HlFWQRzaLbjcMcuqPr6g18L5a5TuP7Q/+L1MiBL9B1EPG1XodWy53tETvfbpdPRmud5j5SqA="
+
+        return try {
+
+            val encoded = URLEncoder.encode(name, "UTF-8")
+            val urlString = "https://www.qidian.com/so/$encoded.html"
+
+            Log.d("SEARCH", "请求 URL: $urlString")
+
+            val url = URL(urlString)
+            val connection = url.openConnection() as HttpURLConnection
+            connection.requestMethod = "GET"
+
+            // ======== 设置 Headers（完全对齐 get_review）=========
+            connection.setRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7")
+            connection.setRequestProperty("Accept-Encoding", "gzip, deflate, br, zstd")
+            connection.setRequestProperty("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6")
+            connection.setRequestProperty("Cache-Control", "max-age=0")
+            connection.setRequestProperty("Connection", "keep-alive")
+            connection.setRequestProperty("Cookie", "_csrfToken=$token; w_tsfp=$tsfp")
+            connection.setRequestProperty("Host", "www.qidian.com")
+            connection.setRequestProperty("Sec-Fetch-Dest", "document")
+            connection.setRequestProperty("Sec-Fetch-Mode", "navigate")
+            connection.setRequestProperty("Sec-Fetch-Site", "none")
+            connection.setRequestProperty("Sec-Fetch-User", "?1")
+            connection.setRequestProperty("Upgrade-Insecure-Requests", "1")
+            connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0")
+            connection.setRequestProperty("sec-ch-ua", "\"Chromium\";v=\"142\", \"Microsoft Edge\";v=\"142\", \"Not_A Brand\";v=\"99\"")
+            connection.setRequestProperty("sec-ch-ua-mobile", "?0")
+            connection.setRequestProperty("sec-ch-ua-platform", "\"Windows\"")
+
+            // ========== 读取网页内容 ==========
+            val responseCode = connection.responseCode
+            Log.d("SEARCH", "HTTP 状态码: $responseCode")
+
+            if (responseCode != HttpURLConnection.HTTP_OK) {
+                Log.e("SEARCH", "请求失败")
+                return ""
+            }
+
+            val html = connection.inputStream.bufferedReader().use { it.readText() }
+
+            Log.d("SEARCH", "HTML 长度: ${html.length}")
+
+            // ======== Jsoup 解析 HTML ========
+            val doc = Jsoup.parse(html)
+
+            val items = doc.select("#result-list .book-img-text ul li.res-book-item")
+            Log.d("SEARCH", "匹配到 ${items.size} 项")
+
+            for (li in items) {
+                val bid = li.attr("data-bid")
+
+                val cite = li.selectFirst("h3.book-info-title cite.red-kw")
+                val title = cite?.text()?.trim()
+                    ?: li.selectFirst("h3.book-info-title a")?.attr("title")?.trim()
+                    ?: ""
+
+                Log.d("SEARCH", "解析到: $title   bid=$bid")
+
+                if (title == name) {
+                    Log.d("SEARCH", "🎉 找到了！title=$title, bid=$bid")
+                    qdidmap[name] = bid
+                    return bid
+                }
+            }
+
+            ""
+        } catch (e: Exception) {
+            Log.e("SEARCH", "搜索获取失败: ${e.message}")
+            e.printStackTrace()
+            ""
         }
     }
 
