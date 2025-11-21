@@ -1,5 +1,11 @@
 package io.legado.app.ui.book.read
 
+import android.graphics.Bitmap
+import android.graphics.drawable.Drawable
+import android.text.Spannable
+import android.text.SpannableStringBuilder
+import android.text.style.ImageSpan
+import android.transition.Transition
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -9,6 +15,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
+import com.bumptech.glide.request.target.CustomTarget
 import io.legado.app.R
 import io.legado.app.help.QdCat.get_sub_review
 import io.legado.app.help.ReviewThread
@@ -79,6 +86,53 @@ class ReviewAdapter(private val threads: List<ReviewThread>) :
         private val tvReplyContent = view.findViewById<TextView>(R.id.tvReplyContent)
         private val line = view.findViewById<View>(R.id.fgline)
 
+        fun setQidianEmojiText(textView: TextView, raw: String) {
+
+            val pattern = Regex("\\[fn=(\\d+)\\]")
+            val spannable = SpannableStringBuilder(raw)
+
+            val matches = pattern.findAll(raw).toList()
+
+            for (m in matches) {
+                val id = m.groupValues[1]
+                val start = m.range.first
+                val end = m.range.last + 1
+
+                val url = "https://qdfepccdn.qidian.com/gtimg/app_emoji_new/newface_${id}.png"
+
+                com.bumptech.glide.Glide.with(textView.context)
+                    .asBitmap()
+                    .load(url)
+                    .into(object :
+                        com.bumptech.glide.request.target.CustomTarget<Bitmap>() {
+
+                        override fun onResourceReady(
+                            resource: Bitmap,
+                            transition: com.bumptech.glide.request.transition.Transition<in Bitmap>?
+                        ) {
+
+                            val size = (textView.textSize * 1.2f).toInt()
+                            val scaled = Bitmap.createScaledBitmap(resource, size, size, true)
+
+                            val span = ImageSpan(textView.context, scaled, ImageSpan.ALIGN_BOTTOM)
+
+                            spannable.setSpan(
+                                span,
+                                start,
+                                end,
+                                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                            )
+
+                            textView.text = spannable
+                        }
+
+                        override fun onLoadCleared(placeholder: Drawable?) {}
+                    })
+            }
+
+            textView.text = spannable
+        }
+
         fun bind(thread: ReviewThread, expanded: Boolean) {
 
             itemView.setBackgroundColor(
@@ -90,7 +144,7 @@ class ReviewAdapter(private val threads: List<ReviewThread>) :
             val root = thread.root
 
             tvUser.text = root.optString("nickName")
-            tvContent.text = root.optString("content")
+            setQidianEmojiText(tvContent, root.optString("content"))
             tvTime.text = root.optString("level") + "楼 · " + root.optString("createTime") + " · " + root.optString("ipAddress")
             likes.text = root.optString("likeCount").toString()
 
@@ -141,6 +195,7 @@ class ReviewAdapter(private val threads: List<ReviewThread>) :
                     )
 
                     user.text = rep.optString("nickName")
+                    setQidianEmojiText(content, rep.optString("content"))
                     content.text = rep.optString("content")
                     time.text = rep.optString("level") + "楼 · " + rep.optString("createTime") + " · " + rep.optString("ipAddress")
                     likes.text = rep.optString("likeCount")
@@ -162,4 +217,7 @@ class ReviewAdapter(private val threads: List<ReviewThread>) :
             }
         }
     }
+
+
+
 }
