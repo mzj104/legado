@@ -12,6 +12,7 @@ import io.legado.app.help.CommentManager
 import io.legado.app.help.PaintPool
 import io.legado.app.help.book.isImage
 import io.legado.app.help.config.AppConfig
+import io.legado.app.help.config.AppConfig.isNightTheme
 import io.legado.app.help.config.ReadBookConfig
 import io.legado.app.lib.theme.ThemeStore
 import io.legado.app.model.ReadBook
@@ -183,6 +184,7 @@ data class TextLine(
         if (isParagraphEnd && !isImage) {
 
             val icon = view.commentIcon ?: return
+            val icon2 = view.commentIcon2 ?: return
 
             val screenWidth = view.width.toFloat()
             val marginRight = 16.dpToPx().toFloat()
@@ -198,10 +200,20 @@ data class TextLine(
             )
             if (count == 0) return
             if (count > 999) count = 999 // 避免过多评论
-            canvas.drawBitmap(icon, iconX, iconY, null)
+
+
+
+            var nowcolor = Color.BLACK
+            if (isNightTheme) {
+                canvas.drawBitmap(icon2, iconX, iconY, null)
+                nowcolor = Color.WHITE
+            }
+            else{
+                canvas.drawBitmap(icon, iconX, iconY, null)
+            }
 
             val paint = Paint().apply {
-                color = Color.BLACK // 或者白色
+                color = nowcolor // 或者白色
                 textSize = (icon.height * 0.5f)
                 isAntiAlias = true
                 textAlign = Paint.Align.CENTER

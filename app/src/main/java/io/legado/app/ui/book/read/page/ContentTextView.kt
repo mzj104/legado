@@ -56,6 +56,8 @@ class ContentTextView(context: Context, attrs: AttributeSet?) : View(context, at
     }
 
     var commentIcon: Bitmap? = null
+    var commentIcon2: Bitmap? = null
+
 
     data class CommentArea(
         val chapterIndex: Int,
@@ -70,10 +72,15 @@ class ContentTextView(context: Context, attrs: AttributeSet?) : View(context, at
             resources,
             R.drawable.icon
         )
-
+        val raw2 = BitmapFactory.decodeResource(
+            resources,
+            R.drawable.icon2
+        )
         // 缩放到 20dp
         val size = 20.dpToPx()
         commentIcon = Bitmap.createScaledBitmap(raw, size, size, true)
+        commentIcon2 = Bitmap.createScaledBitmap(raw2, size, size, true)
+
     }
 
     fun getCommentCountForParagraph(p: Int): Int {
