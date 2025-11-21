@@ -12,6 +12,7 @@ import com.bumptech.glide.request.RequestOptions
 import io.legado.app.R
 import io.legado.app.help.QdCat.get_sub_review
 import io.legado.app.help.ReviewThread
+import io.legado.app.help.config.AppConfig.isNightTheme
 import kotlinx.coroutines.*
 import org.json.JSONObject
 
@@ -76,8 +77,15 @@ class ReviewAdapter(private val threads: List<ReviewThread>) :
         val tvExpandReply = view.findViewById<TextView>(R.id.tvExpandReply)
         private val layoutReply = view.findViewById<LinearLayout>(R.id.layoutReply)
         private val tvReplyContent = view.findViewById<TextView>(R.id.tvReplyContent)
+        private val line = view.findViewById<View>(R.id.fgline)
 
         fun bind(thread: ReviewThread, expanded: Boolean) {
+
+            itemView.setBackgroundColor(
+                if (isNightTheme) 0xFF1C1C1C.toInt() else 0xFFF5F5F5.toInt()
+            )
+            if (isNightTheme)
+                line.setBackgroundColor(0xFF333333.toInt())
 
             val root = thread.root
 
@@ -118,11 +126,19 @@ class ReviewAdapter(private val threads: List<ReviewThread>) :
                     val child = LayoutInflater.from(itemView.context)
                         .inflate(R.layout.item_reply, layoutReply, false)
 
+                    child.setBackgroundColor(
+                        if (isNightTheme) 0xFF1C1C1C.toInt() else 0xFFF5F5F5.toInt()
+                    )
+
                     val img = child.findViewById<ImageView>(R.id.imgReplyAvatar)
                     val user = child.findViewById<TextView>(R.id.tvReplyUser)
                     val content = child.findViewById<TextView>(R.id.tvReplyContent)
                     val time = child.findViewById<TextView>(R.id.tvReplyTime)
                     val likes = child.findViewById<TextView>(R.id.subtvLike)
+
+                    user.setTextColor(
+                        if (isNightTheme) 0xFFDDDDDD.toInt() else 0xFF1C1C1C.toInt()
+                    )
 
                     user.text = rep.optString("nickName")
                     content.text = rep.optString("content")

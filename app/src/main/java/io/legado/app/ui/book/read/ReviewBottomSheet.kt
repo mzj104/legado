@@ -15,6 +15,7 @@ import io.legado.app.help.QdCat
 import io.legado.app.help.QdCat.get_review
 import io.legado.app.help.ReviewThread
 import io.legado.app.help.Simicatalog
+import io.legado.app.help.config.AppConfig.isNightTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -50,8 +51,15 @@ class ReviewBottomSheet(
             text = "全部评论"
             textSize = 18f
             setPadding(32, 24, 32, 24)
-            setTextColor(0xFF333333.toInt())
-            setBackgroundColor(0xFFF5F5F5.toInt())
+
+            if (isNightTheme) {
+                setTextColor(0xFFCCCCCC.toInt())   // 对应 #333333 的夜间亮灰
+                setBackgroundColor(0xFF1C1C1C.toInt()) // 对应 #F5F5F5 的深灰背景
+            }
+            else{
+                setTextColor(0xFF333333.toInt())
+                setBackgroundColor(0xFFF5F5F5.toInt())
+            }
             gravity = Gravity.CENTER_VERTICAL
         }
 
@@ -95,6 +103,18 @@ class ReviewBottomSheet(
         loadReviews(header)
 
         return root
+    }
+
+    override fun onCreateDialog(savedInstanceState: Bundle?) = super.onCreateDialog(savedInstanceState).apply {
+
+        setOnShowListener {
+            val sheet = (this as com.google.android.material.bottomsheet.BottomSheetDialog)
+                .findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
+
+            sheet?.setBackgroundColor(
+                if (isNightTheme) 0xFF1C1C1C.toInt() else 0xFFF5F5F5.toInt()
+            )
+        }
     }
 
     private fun loadReviews(header: TextView) {
