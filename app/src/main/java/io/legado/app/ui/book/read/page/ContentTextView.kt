@@ -107,12 +107,17 @@ class ContentTextView(context: Context, attrs: AttributeSet?) : View(context, at
     ) {
         val globalX = localX
         val globalY = line.lineTop + localY
-
+        val padding = 20
         commentAreas.add(
             CommentArea(
                 chapterIndex,
                 paragraphIndex,
-                RectF(globalX, globalY, globalX + w, globalY + h)
+                RectF(
+                    globalX - padding,
+                    globalY - padding,
+                    globalX + w + padding,
+                    globalY + h + padding
+                )
             )
         )
     }
