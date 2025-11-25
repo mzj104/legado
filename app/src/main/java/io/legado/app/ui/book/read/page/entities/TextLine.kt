@@ -7,6 +7,7 @@ import android.graphics.Paint
 import android.graphics.Paint.FontMetrics
 import android.graphics.RectF
 import android.os.Build
+import android.util.Log
 import androidx.annotation.Keep
 import io.legado.app.help.CommentManager
 import io.legado.app.help.PaintPool
@@ -16,6 +17,7 @@ import io.legado.app.help.config.AppConfig.isNightTheme
 import io.legado.app.help.config.ReadBookConfig
 import io.legado.app.lib.theme.ThemeStore
 import io.legado.app.model.ReadBook
+import io.legado.app.ui.book.read.CommentOffsetManager
 import io.legado.app.ui.book.read.page.ContentTextView
 import io.legado.app.ui.book.read.page.entities.TextPage.Companion.emptyTextPage
 import io.legado.app.ui.book.read.page.entities.column.BaseColumn
@@ -59,6 +61,8 @@ data class TextLine(
     val chapterIndices: IntRange get() = chapterPosition..chapterPosition + charSize
     val height: Float inline get() = lineBottom - lineTop
     val canvasRecorder = CanvasRecorderFactory.create()
+    private var lastDrawnParagraphNum = -1
+
     var searchResultColumnCount = 0
     var isReadAloud: Boolean = false
         set(value) {
@@ -179,8 +183,6 @@ data class TextLine(
         if (ReadBookConfig.underline && !isImage && ReadBook.book?.isImage != true) {
             drawUnderline(canvas)
         }
-        // ======== 段落结束时绘制评论按钮 ========
-// ======== 段落结束时绘制评论按钮 ========
         if (isParagraphEnd && !isImage) {
 
             val icon = view.commentIcon ?: return
@@ -196,34 +198,34 @@ data class TextLine(
 
             var count = CommentManager.getCommentCountForParagraph(
                 view.textPage.chapterIndex,  // 当前章节
-                paragraphNum                 // 当前段落
+                paragraphNum + CommentOffsetManager.offset                // 当前段落
             )
-            if (count == 0) return
+            Log.d("重新绘制",CommentOffsetManager.offset.toString() )
+
             if (count > 999) count = 999 // 避免过多评论
 
 
+            if (count > 0) {
+                var nowcolor = Color.BLACK
+                if (isNightTheme) {
+                    canvas.drawBitmap(icon2, iconX, iconY, null)
+                    nowcolor = Color.WHITE
+                } else {
+                    canvas.drawBitmap(icon, iconX, iconY, null)
+                }
 
-            var nowcolor = Color.BLACK
-            if (isNightTheme) {
-                canvas.drawBitmap(icon2, iconX, iconY, null)
-                nowcolor = Color.WHITE
+                val paint = Paint().apply {
+                    color = nowcolor // 或者白色
+                    textSize = (icon.height * 0.5f)
+                    isAntiAlias = true
+                    textAlign = Paint.Align.CENTER
+                }
+
+                val centerX = iconX + icon.width / 2f
+                val centerY = iconY + icon.height / 2f - (paint.ascent() + paint.descent()) / 2f
+
+                canvas.drawText(count.toString(), centerX, centerY, paint)
             }
-            else{
-                canvas.drawBitmap(icon, iconX, iconY, null)
-            }
-
-            val paint = Paint().apply {
-                color = nowcolor // 或者白色
-                textSize = (icon.height * 0.5f)
-                isAntiAlias = true
-                textAlign = Paint.Align.CENTER
-            }
-
-            val centerX = iconX + icon.width / 2f
-            val centerY = iconY + icon.height / 2f - (paint.ascent() + paint.descent()) / 2f
-
-            canvas.drawText(count.toString(), centerX, centerY, paint)
-
             // 3) 注册点击区域
             view.registerParagraphIcon(
                 view.textPage.chapterIndex,   // 当前章节 index

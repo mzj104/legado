@@ -6,6 +6,10 @@ import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.RectF
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import android.util.AttributeSet
 import android.util.Log
 import android.view.MotionEvent
@@ -17,7 +21,9 @@ import io.legado.app.help.QdCat.get_review
 import io.legado.app.help.Simicatalog.get_qdchapter_id
 import io.legado.app.help.config.AppConfig
 import io.legado.app.model.ReadBook
+import io.legado.app.ui.book.read.CommentOffsetManager
 import io.legado.app.ui.book.read.ReviewBottomSheet
+import io.legado.app.ui.book.read.page.DeletePara.delinfo
 import io.legado.app.ui.book.read.page.delegate.PageDelegate
 import io.legado.app.ui.book.read.page.entities.TextLine
 import io.legado.app.ui.book.read.page.entities.TextPage
@@ -46,6 +52,45 @@ import kotlin.math.min
 /**
  * 阅读内容视图
  */
+
+object VibrateHelper {
+
+    private lateinit var appContext: Context
+
+    /** 必须在 Application 初始化 */
+    fun init(context: Context) {
+        appContext = context.applicationContext
+    }
+
+    /**
+     * 震动（可自定义毫秒）
+     * @param durationMs 震动时长（单位：毫秒）
+     */
+    fun vibrate(durationMs: Long = 40L) {
+        if (!::appContext.isInitialized) return
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val vm = appContext.getSystemService(VibratorManager::class.java)
+            vm?.defaultVibrator?.vibrate(
+                VibrationEffect.createOneShot(
+                    durationMs,
+                    VibrationEffect.DEFAULT_AMPLITUDE
+                )
+            )
+        } else {
+            @Suppress("DEPRECATION")
+            val vibrator = appContext.getSystemService(Vibrator::class.java)
+            vibrator?.vibrate(durationMs)
+        }
+    }
+}
+
+
+object DeletePara {
+    val del = mutableMapOf<Int, MutableList<Int>>()
+    val delinfo = mutableSetOf<String>()
+}
+
 class ContentTextView(context: Context, attrs: AttributeSet?) : View(context, attrs) {
     var selectAble = AppConfig.textSelectAble
     val selectedPaint by lazy {
@@ -58,6 +103,8 @@ class ContentTextView(context: Context, attrs: AttributeSet?) : View(context, at
     var commentIcon: Bitmap? = null
     var commentIcon2: Bitmap? = null
 
+    var lastClickTime = 0L  // 放在 ContentTextView 顶部，作为全局变量
+    var lastClickParagraph = -1
 
     data class CommentArea(
         val chapterIndex: Int,
@@ -158,7 +205,6 @@ class ContentTextView(context: Context, attrs: AttributeSet?) : View(context, at
      */
     fun setContent(textPage: TextPage) {
         commentAreas.clear()
-
         this.textPage = textPage
         // 非滑动翻页动画需要同步重绘，不然翻页可能会出现闪烁
         if (isScroll) {
@@ -308,6 +354,19 @@ class ContentTextView(context: Context, attrs: AttributeSet?) : View(context, at
         }
     }
 
+
+    fun deleteParagraph(chapterIndex: Int, paragraphIndex: Int){
+        Log.d("删除删除",chapterIndex.toString()+" "+paragraphIndex.toString())
+        val list = DeletePara.del.getOrPut(chapterIndex) { mutableListOf() }
+        list.add(paragraphIndex-2)
+        Log.d("删除删除", DeletePara.del.toString())
+        ReadBook.loadContent(resetPageOffset = false)
+        VibrateHelper.vibrate(200)
+        ReadBook.loadContent(resetPageOffset = false)
+        Log.d("删除删除删除", delinfo.toString())
+    }
+
+
     fun get_para_review(chapterIndex: Int, paragraphIndex: Int){
         val page = this.textPage        // 当前页
         val title = page.title          // 当前章节标题
@@ -322,6 +381,11 @@ class ContentTextView(context: Context, attrs: AttributeSet?) : View(context, at
         ReviewBottomSheet(chapterIndex, paragraphIndex)
             .show(fm, "reviewDialog")
     }
+
+    var clickPending = false
+    private val singleClickDelay = 200L
+    private var singleClickRunnable: Runnable? = null
+
     /**
      * 单击
      * @return true:已处理, false:未处理
@@ -330,10 +394,38 @@ class ContentTextView(context: Context, attrs: AttributeSet?) : View(context, at
     fun click(x: Float, y: Float): Boolean {
         for (area in commentAreas) {
             if (area.rect.contains(x, y)) {
-                get_para_review(area.chapterIndex, area.paragraphIndex)
-                return true   // ← 阻止继续执行翻页逻辑
+
+                val index = area.paragraphIndex
+                val now = System.currentTimeMillis()
+
+                // ====== 如果有挂起的单击任务 → 说明这是第二击 ======
+                if (clickPending && lastClickParagraph == index) {
+                    // 取消单击任务
+                    singleClickRunnable?.let { handler.removeCallbacks(it) }
+                    clickPending = false
+
+                    // 执行双击逻辑
+                    deleteParagraph(area.chapterIndex, index)
+                    return true
+                }
+
+                // ====== 否则认为这是第一次点击：延迟触发单击 ======
+                clickPending = true
+                lastClickParagraph = index
+
+                // 安排延时单击任务
+                singleClickRunnable = Runnable {
+                    clickPending = false
+                    // 执行单击（打开评论）
+                    get_para_review(area.chapterIndex, index)
+                }
+
+                handler.postDelayed(singleClickRunnable!!, singleClickDelay)
+
+                return true     // 阻止翻页
             }
         }
+
         var handled = false
         touch(x, y) { _, textPos, textPage, textLine, column ->
             when (column) {

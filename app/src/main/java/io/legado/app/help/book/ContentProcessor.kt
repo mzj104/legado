@@ -13,6 +13,8 @@ import io.legado.app.help.Simicatalog.keepAfterFirstSpace
 import io.legado.app.help.Simicatalog.removeChapterTitle
 import io.legado.app.help.config.AppConfig
 import io.legado.app.help.config.ReadBookConfig
+import io.legado.app.model.ReadBook
+import io.legado.app.ui.book.read.page.DeletePara
 import io.legado.app.utils.ChineseUtils
 import io.legado.app.utils.escapeRegex
 import io.legado.app.utils.replace
@@ -190,7 +192,7 @@ class ContentProcessor private constructor(
         if (isAndroid8) {
             mContent = mContent.replace('\u00A0', ' ')
         }
-        val contents = arrayListOf<String>()
+        var contents = arrayListOf<String>()
         mContent.split("\n").forEach { str ->
             val paragraph = str.trim {
                 it.code <= 0x20 || it == '　'
@@ -205,6 +207,52 @@ class ContentProcessor private constructor(
         }
         val text1 = removeChapterTitle(keepAfterFirstSpace(contents[0]))
         val title2 = removeChapterTitle(keepAfterFirstSpace(chapter.title))
+
+        val delList = DeletePara.del[chapter.index] ?: emptyList<Int>()
+
+// 拷贝副本
+        val mutated = contents.toMutableList()
+
+
+        if (delList.isNotEmpty()) {
+            Log.d("DeletePara", "本章删除列表 = $delList")
+
+            for (rawIdx in delList) {
+                if (rawIdx in 0 until mutated.size) {
+
+                    val para = mutated[rawIdx]
+                    Log.d("DeletePara", "删除 index=$rawIdx 段落=$para")
+
+                    // ⭐ 增加：只在手动删除时记录
+                    DeletePara.delinfo.add(para)
+
+                    mutated.removeAt(rawIdx)
+
+                } else {
+                    Log.d("DeletePara", "跳过越界删除: idx=$rawIdx size=${mutated.size}")
+                }
+            }
+        }
+        else{
+            if (DeletePara.delinfo.isNotEmpty()) {
+                val iterator = mutated.listIterator()
+                while (iterator.hasNext()) {
+                    val para = iterator.next()
+                    if (DeletePara.delinfo.any { it == para }){
+                        Log.d("DeletePara", "自动删除匹配段落内容: $para")
+                        iterator.remove()
+                    }
+                }
+            }
+        }
+
+        contents = mutated as ArrayList<String>
+        Log.d("AfterDelete", "删除后段落数 = ${contents.size}")
+
+
+
+
+
         if (text1 == title2) {
             Log.d("去除重复",text1+"  "+title2)
             return BookContent(sameTitleRemoved, contents.drop(1), effectiveReplaceRules)

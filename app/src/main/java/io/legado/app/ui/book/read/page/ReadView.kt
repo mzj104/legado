@@ -48,6 +48,12 @@ import kotlin.math.abs
 /**
  * 阅读视图
  */
+
+object ReaderBridge {
+    var readView: ReadView? = null
+}
+
+
 class ReadView(context: Context, attrs: AttributeSet) :
     FrameLayout(context, attrs),
     DataSource, LayoutProgressListener {
@@ -113,6 +119,7 @@ class ReadView(context: Context, attrs: AttributeSet) :
     val isAutoPage get() = autoPager.isRunning
 
     init {
+        ReaderBridge.readView = this
         addView(nextPage)
         addView(curPage)
         addView(prevPage)
