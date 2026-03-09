@@ -24,6 +24,10 @@ object Simicatalog {
         var bestCid: String? = null
         var bestTitle = ""
 
+        // 存储所有高相似度候选项
+        data class Candidate(val sim: Double, val cid: String, val title: String, val index: Int)
+        val highSimCandidates = mutableListOf<Candidate>()
+
         // ---------- 2. 遍历起点目录 ----------
         for (i in 0 until qdcat.length()) {
             val item = qdcat.getJSONObject(i)
@@ -39,8 +43,21 @@ object Simicatalog {
                 bestSim = sim
                 bestCid = item.getString("href")
                 bestTitle = t1
+            }
 
-                if (sim > 0.999) break
+            // 收集高相似度候选项
+            if (sim > 0.999) {
+                highSimCandidates.add(Candidate(sim, item.getString("href"), t1, i))
+            }
+        }
+
+        // 如果存在多个高相似度候选项，选择与目标索引差值最小的
+        if (highSimCandidates.isNotEmpty()) {
+            val bestCandidate = highSimCandidates.minByOrNull { kotlin.math.abs(it.index - index) }
+            if (bestCandidate != null) {
+                bestSim = bestCandidate.sim
+                bestCid = bestCandidate.cid
+                bestTitle = bestCandidate.title
             }
         }
 
