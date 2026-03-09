@@ -88,6 +88,38 @@ class ReviewAdapter(private val threads: List<ReviewThread>) :
         private val tvReplyContent = view.findViewById<TextView>(R.id.tvReplyContent)
         private val line = view.findViewById<View>(R.id.fgline)
 
+        /**
+         * 简化默认ID格式的昵称
+         * 规则：
+         * 1. 优先检测以一长串数字结尾（6位及以上），截断数字部分
+         * 2. 或ID长度大于10，超过部分用...表示
+         * 3. isSubReply为true时（子子评论），不管什么类型都只保留5位
+         * 例如：书友123456789 -> 书友123...
+         */
+        private fun simplifyDefaultNickName(nickName: String, keepDigits: Int = 3, isSubReply: Boolean = false): String {
+            // 子子评论：统一只保留5位
+            if (isSubReply) {
+                return if (nickName.length > 5) nickName.substring(0, 5) + "..." else nickName
+            }
+
+            // 规则1：优先检测以一长串数字结尾（6位及以上）
+            val pattern = Regex("(.*?)(\\d{6,})$")
+            val match = pattern.find(nickName)
+            if (match != null) {
+                val prefix = match.groupValues[1]
+                val numbers = match.groupValues[2]
+                // 只保留指定位数数字
+                return prefix + numbers.substring(0, keepDigits.coerceAtMost(numbers.length)) + "..."
+            }
+
+            // 规则2：整个ID长度大于10
+            if (nickName.length > 10) {
+                return nickName.substring(0, 10) + "..."
+            }
+
+            return nickName
+        }
+
         fun setQidianEmojiText(textView: TextView, raw: String) {
 
             val pattern = Regex("\\[fn=(\\d+)\\]")
@@ -207,6 +239,7 @@ class ReviewAdapter(private val threads: List<ReviewThread>) :
 
                     val img = child.findViewById<ImageView>(R.id.imgReplyAvatar)
                     val user = child.findViewById<TextView>(R.id.tvReplyUser)
+                    val replyTo = child.findViewById<TextView>(R.id.tvReplyTo)
                     val content = child.findViewById<TextView>(R.id.tvReplyContent)
                     val time = child.findViewById<TextView>(R.id.tvReplyTime)
                     val likes = child.findViewById<TextView>(R.id.subtvLike)
@@ -216,7 +249,19 @@ class ReviewAdapter(private val threads: List<ReviewThread>) :
                         if (isNightTheme) 0xFFDDDDDD.toInt() else 0xFF1C1C1C.toInt()
                     )
 
-                    user.text = rep.optString("nickName")
+                    // 显示回复信息
+                    val quoteNickName = rep.optString("quoteNickName", "")
+                    val rootNickName = root.optString("nickName")
+                    if (quoteNickName.isNotEmpty() && quoteNickName != rootNickName) {
+                        // 子子评论（回复其他评论）：两个ID都只保留5位
+                        user.text = simplifyDefaultNickName(rep.optString("nickName"), isSubReply = true)
+                        replyTo.visibility = View.VISIBLE
+                        replyTo.text = "回复：" + simplifyDefaultNickName(quoteNickName, isSubReply = true)
+                    } else {
+                        // 普通子评论（回复主评论）：显示完整昵称，不显示回复信息
+                        user.text = rep.optString("nickName")
+                        replyTo.visibility = View.GONE
+                    }
                     setQidianEmojiText(content, rep.optString("content"))
                     content.text = rep.optString("content")
                     time.text = rep.optString("level") + "楼 · " + rep.optString("createTime") + " · " + rep.optString("ipAddress")

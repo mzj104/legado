@@ -39,6 +39,16 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
 
+            <!-- 回复信息（如：回复：用户名） -->
+            <TextView
+                android:id="@+id/tvReplyTo"
+                android:textSize="14sp"
+                android:textColor="#999999"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:visibility="gone" />
+
 
         </LinearLayout>
 
