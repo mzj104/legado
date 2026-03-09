@@ -104,7 +104,7 @@ object PreferKey {
     const val mangaColorFilter = "mangaColorFilter"
     const val enableMangaEInk = "enableMangaEInk"
     const val mangaEInkThreshold = "mangaEInkThreshold"
-    const val disableHorizontalAnimator = "disableHorizontalAnimator"
+    const val disableHorizontalPageSnap = "disableHorizontalPageSnap"
     const val enableMangaGray = "enableMangaGray"
     const val autoRefresh = "auto_refresh"
     const val defaultToRead = "defaultToRead"
@@ -166,7 +166,9 @@ object PreferKey {
     const val readAloudByMediaButton = "readAloudByMediaButton"
     const val showMangaUi = "showMangaUi"
     const val disableMangaScale = "disableMangaScale"
+    const val disableMangaPageAnim = "disableMangaPageAnim"
     const val paddingDisplayCutouts = "paddingDisplayCutouts"
+    const val autoCheckNewBackup = "autoCheckNewBackup"
 
     const val cPrimary = "colorPrimary"
     const val cAccent = "colorAccent"
