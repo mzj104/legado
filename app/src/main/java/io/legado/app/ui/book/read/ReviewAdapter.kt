@@ -20,6 +20,7 @@ import io.legado.app.R
 import io.legado.app.help.QdCat.get_sub_review
 import io.legado.app.help.ReviewThread
 import io.legado.app.help.config.AppConfig.isNightTheme
+import io.legado.app.ui.widget.dialog.PhotoDialog
 import kotlinx.coroutines.*
 import org.json.JSONObject
 
@@ -78,6 +79,7 @@ class ReviewAdapter(private val threads: List<ReviewThread>) :
         private val tvContent = view.findViewById<TextView>(R.id.tvContent)
         private val tvTime = view.findViewById<TextView>(R.id.tvTime)
         private val imgAvatar = view.findViewById<ImageView>(R.id.imgAvatar)
+        private val imgReviewImage = view.findViewById<ImageView>(R.id.imgReviewImage)
 
         private val likes = view.findViewById<TextView>(R.id.tvLike)
 
@@ -153,6 +155,25 @@ class ReviewAdapter(private val threads: List<ReviewThread>) :
                 .apply(RequestOptions().circleCrop())
                 .into(imgAvatar)
 
+            // 加载评论图片
+            val imageUrl = root.optString("imageDetail", "")
+            if (imageUrl.isNotEmpty()) {
+                imgReviewImage.visibility = View.VISIBLE
+                Glide.with(itemView.context)
+                    .load(imageUrl)
+                    .apply(RequestOptions().fitCenter())
+                    .into(imgReviewImage)
+                // 点击放大图片
+                imgReviewImage.setOnClickListener {
+                    PhotoDialog(imageUrl).show(
+                        (itemView.context as androidx.fragment.app.FragmentActivity)
+                            .supportFragmentManager, "photo_dialog"
+                    )
+                }
+            } else {
+                imgReviewImage.visibility = View.GONE
+            }
+
             val replyCount = root.optInt("rootReviewReplyCount")
 
             if (replyCount > 0) {
@@ -189,6 +210,7 @@ class ReviewAdapter(private val threads: List<ReviewThread>) :
                     val content = child.findViewById<TextView>(R.id.tvReplyContent)
                     val time = child.findViewById<TextView>(R.id.tvReplyTime)
                     val likes = child.findViewById<TextView>(R.id.subtvLike)
+                    val imgReplyImage = child.findViewById<ImageView>(R.id.imgReplyImage)
 
                     user.setTextColor(
                         if (isNightTheme) 0xFFDDDDDD.toInt() else 0xFF1C1C1C.toInt()
@@ -204,6 +226,25 @@ class ReviewAdapter(private val threads: List<ReviewThread>) :
                         .load(rep.optString("avatar"))
                         .apply(RequestOptions().circleCrop())
                         .into(img)
+
+                    // 加载子评论图片
+                    val replyImageUrl = rep.optString("imageDetail", "")
+                    if (replyImageUrl.isNotEmpty()) {
+                        imgReplyImage.visibility = View.VISIBLE
+                        Glide.with(itemView.context)
+                            .load(replyImageUrl)
+                            .apply(RequestOptions().fitCenter())
+                            .into(imgReplyImage)
+                        // 点击放大图片
+                        imgReplyImage.setOnClickListener {
+                            PhotoDialog(replyImageUrl).show(
+                                (itemView.context as androidx.fragment.app.FragmentActivity)
+                                    .supportFragmentManager, "photo_dialog"
+                            )
+                        }
+                    } else {
+                        imgReplyImage.visibility = View.GONE
+                    }
 
                     layoutReply.addView(child)
                 }

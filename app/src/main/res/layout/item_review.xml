@@ -83,6 +83,18 @@
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
+            <!-- 评论图片 -->
+            <ImageView
+                android:id="@+id/imgReviewImage"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:maxWidth="200dp"
+                android:maxHeight="200dp"
+                android:adjustViewBounds="true"
+                android:scaleType="centerCrop"
+                android:visibility="gone" />
+
             <!-- 时间+IP -->
             <TextView
                 android:id="@+id/tvTime"

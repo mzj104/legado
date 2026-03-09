@@ -86,6 +86,17 @@
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
+        <!-- 子评论图片 -->
+        <ImageView
+            android:id="@+id/imgReplyImage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:maxWidth="180dp"
+            android:maxHeight="180dp"
+            android:adjustViewBounds="true"
+            android:scaleType="centerCrop"
+            android:visibility="gone" />
 
         <!-- 子评论时间 -->
         <TextView
