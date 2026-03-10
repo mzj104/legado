@@ -28,3 +28,6 @@ forked from: https://github.com/gedoor/legado
 ## 尚待解决
 1. qd段落评论和书源段落可能的不匹配问题
 
+## 界面展示
+
+![img.png](img.png)
