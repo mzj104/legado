@@ -57,9 +57,13 @@ class ReviewAdapter(private val threads: List<ReviewThread>) :
                     val replies = get_sub_review(rootId)
 
                     thread.replies.clear()
+                    val sortedReplies = mutableListOf<JSONObject>()
                     for (i in 0 until replies.length()) {
-                        thread.replies.add(replies.getJSONObject(i))
+                        sortedReplies.add(replies.getJSONObject(i))
                     }
+                    // 按时间从早到晚排序
+                    sortedReplies.sortBy { it.optString("createTime") }
+                    thread.replies.addAll(sortedReplies)
 
                     thread.repliesLoaded = true
 

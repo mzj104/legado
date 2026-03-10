@@ -229,7 +229,8 @@ class ReviewBottomSheet(
 
             val threads = MutableList(rawArr.length()) { i ->
                 ReviewThread(rawArr.getJSONObject(i))
-            }
+            }.sortedByDescending { it.root.optInt("likeCount") }
+                .toMutableList()
 
             withContext(Dispatchers.Main) {
                 // ⭐ 更新评论数量
