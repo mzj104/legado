@@ -25,9 +25,14 @@ forked from: https://github.com/gedoor/legado
 
 添加评论查看图片功能，添加子评论和子子评论显示逻辑。
 
-## 尚待解决
-1. qd段落评论和书源段落可能的不匹配问题
+
+## v1.4
+
+引入llm api自动匹配，解决qd段落评论和书源段落可能的不匹配问题
+
+用户可自行配置api
+
 
 ## 界面展示
 
-![img.png](img.png)
+<img src="img.png" width="400">
