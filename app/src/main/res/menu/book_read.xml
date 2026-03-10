@@ -138,6 +138,11 @@
         app:showAsAction="never" />
 
     <item
+        android:id="@+id/menu_add_api"
+        android:title="@string/add_api"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/menu_effective_replaces"
         android:title="@string/effective_replaces"
         app:showAsAction="never" />

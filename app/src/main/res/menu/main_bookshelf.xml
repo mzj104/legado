@@ -71,6 +71,12 @@
         app:showAsAction="never" />
 
     <item
+        android:id="@+id/menu_add_api"
+        android:icon="@drawable/ic_import"
+        android:title="@string/add_api"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/menu_log"
         android:icon="@drawable/ic_cfg_about"
         android:title="@string/log"

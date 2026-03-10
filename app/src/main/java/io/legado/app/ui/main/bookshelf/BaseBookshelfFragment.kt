@@ -20,6 +20,7 @@ import io.legado.app.help.config.AppConfig
 import io.legado.app.lib.dialogs.alert
 import io.legado.app.ui.about.AppLogDialog
 import io.legado.app.ui.book.cache.CacheActivity
+import io.legado.app.ui.book.read.ApiConfigDialog
 import io.legado.app.ui.book.group.GroupManageDialog
 import io.legado.app.ui.book.import.local.ImportBookActivity
 import io.legado.app.ui.book.import.remote.RemoteBookActivity
@@ -117,6 +118,7 @@ abstract class BaseBookshelfFragment(layoutId: Int) : VMBaseFragment<BookshelfVi
             }
 
             R.id.menu_import_bookshelf -> importBookshelfAlert(groupId)
+            R.id.menu_add_api -> ApiConfigDialog.show(requireContext())
             R.id.menu_log -> showDialogFragment<AppLogDialog>()
         }
     }

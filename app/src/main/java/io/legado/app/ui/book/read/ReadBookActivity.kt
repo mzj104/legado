@@ -620,6 +620,8 @@ class ReadBookActivity : BaseReadBookActivity(),
 
             R.id.menu_effective_replaces -> showDialogFragment<EffectiveReplacesDialog>()
 
+            R.id.menu_add_api -> ApiConfigDialog.show(this)
+
             R.id.menu_help -> showHelp()
         }
         return super.onCompatOptionsItemSelected(item)

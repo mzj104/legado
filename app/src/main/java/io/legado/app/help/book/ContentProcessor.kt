@@ -249,10 +249,6 @@ class ContentProcessor private constructor(
         contents = mutated as ArrayList<String>
         Log.d("AfterDelete", "删除后段落数 = ${contents.size}")
 
-
-
-
-
         if (text1 == title2) {
             Log.d("去除重复",text1+"  "+title2)
             return BookContent(sameTitleRemoved, contents.drop(1), effectiveReplaceRules)

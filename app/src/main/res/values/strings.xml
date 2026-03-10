@@ -355,6 +355,14 @@
     <string name="pt_show_all_find">Display all Discovery</string>
     <string name="ps_show_all_find">Display the selected origin\'s Discovery if closed</string>
     <string name="update_toc">Update chapters</string>
+    <string name="add_api">Add API</string>
+    <string name="api_config">API Configuration</string>
+    <string name="api_key">API Key</string>
+    <string name="api_url">API URL</string>
+    <string name="api_model">Model Name</string>
+    <string name="api_key_hint">Enter API key</string>
+    <string name="api_url_hint">Enter API URL (optional)</string>
+    <string name="api_model_hint">Enter model name</string>
     <string name="txt_toc_rule">Txt Catalog Rule</string>
     <string name="select_section_export">Choose some chapters to be exported</string>
     <string name="set_charset">Text encoding</string>

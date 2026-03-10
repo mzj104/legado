@@ -353,6 +353,15 @@
     <string name="pt_show_all_find">显示所有发现</string>
     <string name="ps_show_all_find">关闭则只显示勾选源的发现</string>
     <string name="update_toc">更新目录</string>
+    <string name="add_api">添加API</string>
+    <string name="api_config">API配置</string>
+    <string name="api_key">API密钥</string>
+    <string name="api_url">API地址</string>
+    <string name="api_model">模型名称</string>
+    <string name="api_key_hint">请输入API密钥</string>
+    <string name="api_url_hint">请输入API地址(可选)</string>
+    <string name="api_model_hint">请输入模型名称</string>
+    <string name="save">保存</string>
     <string name="txt_toc_rule">TXT 目录规则</string>
     <string name="select_section_export">选择待导出章节</string>
     <string name="set_charset">设置编码</string>
