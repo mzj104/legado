@@ -113,4 +113,7 @@
     <color name="ate_navigation_drawer_selected_dark">#202020</color>
 
     <color name="book_ant_10">#141414</color>
+
+    <!-- 展开回复按钮颜色 -->
+    <color name="review_expand_reply">#3A7BFF</color>
 </resources>

@@ -39,4 +39,7 @@
 
     <!--statusBarBackground-->
     <color name="navigation_bar_bag">#222222</color>
+
+    <!-- 展开回复按钮颜色 -->
+    <color name="review_expand_reply">#B3B3B3</color>
 </resources>

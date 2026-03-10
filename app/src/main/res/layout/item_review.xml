@@ -111,7 +111,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="展开回复（2）"
-                android:textColor="#3A7BFF"
+                android:textColor="@color/review_expand_reply"
                 android:textSize="14sp"
                 android:paddingTop="6dp"
                 android:visibility="gone" />

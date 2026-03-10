@@ -122,20 +122,17 @@ class ReviewBottomSheet(
         }
 
         val titleView = AppCompatTextView(requireContext()).apply {
-            text = "全部评论"
-            textSize = 18f
-            gravity = Gravity.CENTER
-            if (isNightTheme) setTextColor(0xFFCCCCCC.toInt())
-            else setTextColor(0xFF333333.toInt())
+            text = ""
+            textSize = 0f
         }
 
         val btnSimilarity = AppCompatButton(requireContext()).apply {
-            text = "相似度"
-            textSize = 12f
-            setPadding(15, 5, 15, 5)
+            text = "自动匹配"
+            textSize = 14f
+            setPadding(20, 10, 20, 10)
             setBackgroundColor(0x00000000)
-            if (isNightTheme) setTextColor(0xFF4A90E2.toInt())
-            else setTextColor(0xFF007AFF.toInt())
+            if (isNightTheme) setTextColor(0xFFCCCCCC.toInt())
+            else setTextColor(0xFF000000.toInt())
 
             setOnClickListener {
                 calculateSimilarity()
@@ -236,7 +233,7 @@ class ReviewBottomSheet(
 
             withContext(Dispatchers.Main) {
                 // ⭐ 更新评论数量
-                titleView.text = "全部（${threads.size}）"
+                titleView.text = ""
 
                 progressBar?.visibility = View.GONE
                 recyclerView?.visibility = View.VISIBLE
@@ -392,6 +389,14 @@ class ReviewBottomSheet(
                         ReaderBridge.readView?.upContent(0, true)
                     } else {
                         Log.d("MATCH_API", "差值过大，不设置偏移")
+                    }
+
+                    withContext(Dispatchers.Main) {
+                        if (diff == -1) {
+                            Toast.makeText(requireContext(), "当前匹配正确", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(requireContext(), "已完成匹配", Toast.LENGTH_SHORT).show()
+                        }
                     }
                 } else {
                     Log.d("MATCH_API", "无法解析段落序号")
