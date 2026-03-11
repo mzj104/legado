@@ -1,6 +1,8 @@
 package io.legado.app.ui.book.read
 
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.graphics.drawable.GradientDrawable
 import android.view.Gravity
@@ -12,6 +14,7 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatButton
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -109,8 +112,13 @@ class ReviewBottomSheet(
             else setTextColor(0xFF444444.toInt())
 
             setOnClickListener {
+                Log.d("AUTO_REVIEW", "========== 点击向前按钮 ==========")
                 CommentOffsetManager.backward()
+                val newOffset = CommentOffsetManager.offset
+                Log.d("AUTO_REVIEW", "新offset: $newOffset")
                 ReaderBridge.readView?.upContent(0, true)
+                // 只有offset改变了才触发自动打开
+                autoOpenReviewForNewOffset(newOffset)
             }
         }
 
@@ -175,8 +183,13 @@ class ReviewBottomSheet(
             else setTextColor(0xFF444444.toInt())
 
             setOnClickListener {
+                Log.d("AUTO_REVIEW", "========== 点击向后按钮 ==========")
                 CommentOffsetManager.forward()
+                val newOffset = CommentOffsetManager.offset
+                Log.d("AUTO_REVIEW", "新offset: $newOffset")
                 ReaderBridge.readView?.upContent(0, true)
+                // 只有offset改变了才触发自动打开
+                autoOpenReviewForNewOffset(newOffset)
             }
         }
 
@@ -414,12 +427,23 @@ class ReviewBottomSheet(
                     Log.d("MATCH_API", "差值: $diff")
 
                     if (kotlin.math.abs(diff) < 5) {
+                        // 记录offset改变前的值
+                        val oldOffset = CommentOffsetManager.offset
                         // get_review 使用的是 paragraphIndex - 1 + offset
                         // 所以 offset = (matchedParaNum - 1) - (paragraphIndex - 1) = matchedParaNum - paragraphIndex
                         CommentOffsetManager.offset += -diff - 1
-                        Log.d("MATCH_API", "设置偏移: ${CommentOffsetManager.offset}")
+                        val newOffset = CommentOffsetManager.offset
+                        Log.d("MATCH_API", "设置偏移: $newOffset (旧偏移: $oldOffset)")
                         // 刷新页面
                         ReaderBridge.readView?.upContent(0, true)
+
+                        // 只有offset改变了才触发自动打开
+                        if (newOffset != oldOffset) {
+                            Log.d("AUTO_REVIEW", "========== 自动匹配改变了offset，准备触发评论 ==========")
+                            autoOpenReviewForNewOffset(newOffset)
+                        } else {
+                            Log.d("AUTO_REVIEW", "========== 自动匹配offset未改变，不触发评论 ==========")
+                        }
                     } else {
                         Log.d("MATCH_API", "差值过大，不设置偏移")
                     }
@@ -544,6 +568,57 @@ class ReviewBottomSheet(
             }
             return "网络请求异常: ${e.message}"
         }
+    }
+
+    /**
+     * 自动打开新偏移对应段落的评论弹窗
+     * @param expectedOffset 期望的offset值，只有当当前offset等于这个值时才触发
+     */
+    private fun autoOpenReviewForNewOffset(expectedOffset: Int) {
+        Log.d("AUTO_REVIEW", "========== autoOpenReviewForNewOffset 开始 ==========")
+        Log.d("AUTO_REVIEW", "原始段落索引: $paragraphIndex, 期望偏移: $expectedOffset, 当前偏移: ${CommentOffsetManager.offset}")
+        Log.d("AUTO_REVIEW", "注意：段落索引保持不变=$paragraphIndex，因为正文按钮位置不变")
+
+        val handler = Handler(Looper.getMainLooper())
+        // 延迟执行，等待内容刷新完成
+        handler.postDelayed({
+            Log.d("AUTO_REVIEW", "200ms后，检查offset是否改变")
+
+            // 检查offset是否与期望值一致，只有一致才继续（说明offset确实改变了）
+            if (CommentOffsetManager.offset != expectedOffset) {
+                Log.d("AUTO_REVIEW", "offset已改变（期望=$expectedOffset, 实际=${CommentOffsetManager.offset}），可能是其他操作改变了，取消自动打开")
+                return@postDelayed
+            }
+
+            Log.d("AUTO_REVIEW", "offset确认正确，准备获取ContentTextView")
+
+            // 获取当前页的 ContentTextView 并触发评论按钮点击
+            val readView = ReaderBridge.readView
+            if (readView == null) {
+                Log.e("AUTO_REVIEW", "ReaderBridge.readView 为空")
+                return@postDelayed
+            }
+            Log.d("AUTO_REVIEW", "获取到 readView")
+
+            // 获取当前显示的页面（curPage）
+            val curPage = readView.curPage
+            Log.d("AUTO_REVIEW", "获取到 curPage")
+
+            val contentTextView = curPage.contentTextView
+            Log.d("AUTO_REVIEW", "获取到 contentTextView")
+
+            // 先关闭当前弹窗（新的弹窗会自动替换旧的）
+            dismiss()
+
+            // 再次延迟，确保dismiss动画开始后再打开新弹窗
+            handler.postDelayed({
+                // 调用 get_para_review 方法打开评论弹窗
+                // 使用原始段落索引，offset变化已经在loadReviews中处理
+                Log.d("AUTO_REVIEW", "300ms后，准备调用 get_para_review(chapterIndex=$chapterIndex, paragraphIndex=$paragraphIndex), offset=${CommentOffsetManager.offset}")
+                contentTextView.get_para_review(chapterIndex, paragraphIndex)
+                Log.d("AUTO_REVIEW", "========== autoOpenReviewForNewOffset 完成 ==========")
+            }, 100)
+        }, 200)
     }
 
 }
