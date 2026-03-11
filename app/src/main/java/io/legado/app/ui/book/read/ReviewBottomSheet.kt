@@ -2,6 +2,7 @@ package io.legado.app.ui.book.read
 
 import android.os.Bundle
 import android.util.Log
+import android.graphics.drawable.GradientDrawable
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
@@ -129,10 +130,28 @@ class ReviewBottomSheet(
         val btnSimilarity = AppCompatButton(requireContext()).apply {
             text = "自动匹配"
             textSize = 14f
-            setPadding(20, 10, 20, 10)
-            setBackgroundColor(0x00000000)
-            if (isNightTheme) setTextColor(0xFFCCCCCC.toInt())
-            else setTextColor(0xFF000000.toInt())
+            setPadding(dp(4), dp(1), dp(4), dp(1))
+
+            val borderColor = if (isNightTheme) 0xFFCCCCCC.toInt() else 0xFF000000.toInt()
+            setTextColor(borderColor)
+
+            val paint = paint
+            val textWidth = paint.measureText("自动匹配")
+            val fontMetrics = paint.fontMetrics
+            val textHeight = fontMetrics.descent - fontMetrics.ascent
+
+            val drawable = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = dp(4).toFloat()
+                setStroke(dp(1), borderColor)
+            }
+            background = drawable
+
+            post {
+                val insetX = ((width - textWidth - dp(8)) / 2).toInt().coerceAtLeast(0)
+                val insetY = ((height - textHeight - dp(4)) / 2).toInt().coerceAtLeast(0)
+                drawable.setBounds(insetX, insetY, width - insetX, height - insetY)
+            }
 
             setOnClickListener {
                 calculateSimilarity()
