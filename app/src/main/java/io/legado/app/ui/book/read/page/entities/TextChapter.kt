@@ -6,7 +6,7 @@ import androidx.annotation.Keep
 import io.legado.app.data.entities.Book
 import io.legado.app.data.entities.BookChapter
 import io.legado.app.data.entities.ReplaceRule
-import io.legado.app.help.ApiClient.fetchCommentCounts
+import io.legado.app.help.ApiClient.fetchChapterReviews
 import io.legado.app.help.CommentManager
 import io.legado.app.help.QdCat
 import io.legado.app.help.Simicatalog
@@ -46,12 +46,33 @@ data class TextChapter(
             if (qdId == null) return
 
             CoroutineScope(Dispatchers.IO).launch {
-                val result = fetchCommentCounts(qdId)
-                CommentManager.putChapterComments(chapter.index, result)
+                // 使用新的 API 获取章节评论数据（含热评信息）
+                val chapterReviewData = fetchChapterReviews(qdId)
+                if (chapterReviewData != null) {
+                    // 收集热评段落的 segmentId
+                    val hotSegments = chapterReviewData.list
+                        .filter { it.isHotSegment }
+                        .map { it.segmentId }
+                        .toSet()
 
-                // 刷新页面（触发重新布局+绘制）
-                withContext(Dispatchers.Main) {
-                    ReadBook.callBack?.upContent()
+                    // 构建评论数量映射（保持向后兼容的格式）
+                    val countMap = mutableMapOf<String, Int>()
+                    chapterReviewData.list.forEach { segment ->
+                        val segmentId = if (segment.segmentId == -1) 0 else segment.segmentId
+                        countMap["chapter_${qdId}_para_$segmentId"] = segment.reviewNum
+                    }
+
+                    // 保存到 CommentManager（包含热评信息）
+                    CommentManager.putChapterCommentsWithHotSegment(
+                        chapter.index,
+                        countMap,
+                        hotSegments
+                    )
+
+                    // 刷新页面（触发重新布局+绘制）
+                    withContext(Dispatchers.Main) {
+                        ReadBook.callBack?.upContent()
+                    }
                 }
             }
         }

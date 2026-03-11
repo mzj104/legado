@@ -196,26 +196,38 @@ data class TextLine(
                 iconX = screenWidth - icon.width - marginRight
             }
 
-            var count = CommentManager.getCommentCountForParagraph(
+            val actualParagraphIndex = paragraphNum + CommentOffsetManager.offset
+            val commentInfo = CommentManager.getCommentInfoForParagraph(
                 view.textPage.chapterIndex,  // 当前章节
-                paragraphNum + CommentOffsetManager.offset                // 当前段落
+                actualParagraphIndex         // 当前段落
             )
-            Log.d("重新绘制",CommentOffsetManager.offset.toString() )
+            var count = commentInfo.count
+            val isHotSegment = commentInfo.isHotSegment
+
+            Log.d("重新绘制", "offset=${CommentOffsetManager.offset}, isHotSegment=$isHotSegment")
 
             if (count > 999) count = 999 // 避免过多评论
 
 
             if (count > 0) {
                 var nowcolor = Color.BLACK
-                if (isNightTheme) {
-                    canvas.drawBitmap(icon2, iconX, iconY, null)
-                    nowcolor = Color.WHITE
-                } else {
+
+                // 根据热评状态选择图标（不区分日夜模式）：
+                // - 热评：icon.png
+                // - 非热评：icon2.png
+                if (isHotSegment) {
                     canvas.drawBitmap(icon, iconX, iconY, null)
+                } else {
+                    canvas.drawBitmap(icon2, iconX, iconY, null)
+                }
+
+                // 根据日夜模式选择文字颜色
+                if (isNightTheme) {
+                    nowcolor = Color.WHITE
                 }
 
                 val paint = Paint().apply {
-                    color = nowcolor // 或者白色
+                    color = nowcolor
                     textSize = (icon.height * 0.5f)
                     isAntiAlias = true
                     textAlign = Paint.Align.CENTER

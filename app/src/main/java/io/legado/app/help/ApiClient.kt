@@ -9,8 +9,36 @@ import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
 
+/**
+ * 段落评论数据类
+ */
+data class ReviewSegment(
+    val isHotSegment: Boolean,      // 是否为热评段落
+    val authorReview: JSONObject?,   // 作者评论（可选）
+    val containSelf: Boolean,        // 是否包含自己
+    val segmentId: Int,              // 段落ID，-1表示整章
+    val textCount: Int,              // 文本数量
+    val paragraphId: Int,            // 段落序号
+    val reviewNum: Int,              // 评论数量
+    val isHotComment: Boolean        // 是否为热评
+)
+
+/**
+ * 章节评论响应数据类
+ */
+data class ChapterReviewData(
+    val enableReview: Int,           // 是否启用评论
+    val total: Int,                  // 总评论数
+    val list: List<ReviewSegment>    // 段落评论列表
+)
+
 object ApiClient {
-    suspend fun fetchCommentCounts(chapterId: String): Map<String, Int> =
+    /**
+     * 获取章节评论数据
+     * @param chapterId 章节ID
+     * @return ChapterReviewData 包含热评信息的完整评论数据
+     */
+    suspend fun fetchChapterReviews(chapterId: String): ChapterReviewData? =
         withContext(Dispatchers.IO) {
             // 替换为实际的 bookId 和 chapterId
             val bookId = QdCat.nowqdbookid  // 假设 bookId 固定，你可以根据需要修改
@@ -67,35 +95,69 @@ object ApiClient {
                     // 解析 JSON 响应
                     val json = JSONObject(body)
                     val commentsData = json.getJSONObject("data")
+                    val enableReview = commentsData.optInt("enableReview", 0)
+                    val total = commentsData.optInt("total", 0)
                     val commentsList = commentsData.getJSONArray("list")
 
-                    val result = mutableMapOf<String, Int>()
+                    val reviewSegments = mutableListOf<ReviewSegment>()
 
                     // 遍历评论数据
                     for (i in 0 until commentsList.length()) {
                         val comment = commentsList.getJSONObject(i)
-                        var segmentId = comment.optInt("segmentId", 0)  // 默认值为0
-                        if (segmentId == -1)
-                            segmentId = 0
-                        val reviewNum = comment.getInt("reviewNum")
-                        result["chapter_${chapterId}_para_$segmentId"] = reviewNum
-                        Log.e("COMMENT", "解析到评论：chapter_${chapterId}_para_$segmentId => $reviewNum")
+                        val segmentId = comment.optInt("segmentId", 0)
+
+                        val reviewSegment = ReviewSegment(
+                            isHotSegment = comment.optBoolean("isHotSegment", false),
+                            authorReview = comment.optJSONObject("authorReview"),
+                            containSelf = comment.optBoolean("containSelf", false),
+                            segmentId = segmentId,
+                            textCount = comment.optInt("textCount", 0),
+                            paragraphId = comment.optInt("paragraphId", 0),
+                            reviewNum = comment.optInt("reviewNum", 0),
+                            isHotComment = comment.optBoolean("isHotComment", false)
+                        )
+                        reviewSegments.add(reviewSegment)
+
+                        Log.e("COMMENT", "解析到评论：segmentId=$segmentId, reviewNum=${reviewSegment.reviewNum}, isHotSegment=${reviewSegment.isHotSegment}")
                     }
 
+                    val result = ChapterReviewData(
+                        enableReview = enableReview,
+                        total = total,
+                        list = reviewSegments
+                    )
+
                     Log.e("COMMENT", "=== 评论解析完成 ===")
-                    Log.e("COMMENT", result.toString())
+                    Log.e("COMMENT", "总评论数: $total, 启用评论: $enableReview, 段落数: ${reviewSegments.size}")
 
                     return@withContext result
                 } else {
                     Log.e("COMMENT", "HTTP 请求失败，状态码: $responseCode")
-                    return@withContext emptyMap()
+                    return@withContext null
                 }
             } catch (e: Exception) {
                 Log.e("COMMENT", "评论获取失败: ${e.message}")
                 e.printStackTrace()
-                return@withContext emptyMap()
+                return@withContext null
             }
         }
+
+    /**
+     * 获取章节评论数量（旧接口，保持向后兼容）
+     * @param chapterId 章节ID
+     * @return Map<String, Int> 段落ID到评论数的映射
+     */
+    suspend fun fetchCommentCounts(chapterId: String): Map<String, Int> {
+        val reviewData = fetchChapterReviews(chapterId) ?: return emptyMap()
+
+        val result = mutableMapOf<String, Int>()
+        reviewData.list.forEach { segment ->
+            val segmentId = if (segment.segmentId == -1) 0 else segment.segmentId
+            result["chapter_${chapterId}_para_$segmentId"] = segment.reviewNum
+        }
+
+        return result
+    }
 
     // 获取 CSRF Token（你可以根据实际需求替换这个方法）
     private fun getCsrfToken(): String {

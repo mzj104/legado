@@ -266,15 +266,28 @@ class ReviewBottomSheet(
                     return@launch
                 }
 
-                // 收集所有评论内容
+                // 收集评论内容：主评论按点赞数排序，长度不足500时才添加子评论
                 val allReviewContent = StringBuilder()
+
+                // 先添加主评论（threads 已按点赞数排序）
                 for (thread in threads) {
                     val content = thread.root.optString("content", "")
                     if (content.isNotEmpty()) {
                         allReviewContent.append(content).append("\n")
                     }
-                    // 也包含子评论
-                    for (reply in thread.replies) {
+                }
+
+                // 如果长度不足500，添加子评论（按点赞数排序）
+                if (allReviewContent.length < 500) {
+                    // 收集所有子评论并按点赞数排序
+                    val allReplies = mutableListOf<JSONObject>()
+                    for (thread in threads) {
+                        allReplies.addAll(thread.replies)
+                    }
+                    allReplies.sortByDescending { it.optInt("likeCount") }
+
+                    for (reply in allReplies) {
+                        if (allReviewContent.length >= 500) break
                         val replyContent = reply.optString("content", "")
                         if (replyContent.isNotEmpty()) {
                             allReviewContent.append(replyContent).append("\n")
@@ -282,10 +295,10 @@ class ReviewBottomSheet(
                     }
                 }
 
-                // 截断评论内容，最多前1000字
+                // 截断评论内容到500字符
                 val reviewSummary = allReviewContent.toString().trim()
-                val truncatedReview = if (reviewSummary.length > 1000) {
-                    reviewSummary.take(1000) + "...(已截断)"
+                val truncatedReview = if (reviewSummary.length > 500) {
+                    reviewSummary.take(500) + "...(已截断)"
                 } else {
                     reviewSummary
                 }
@@ -436,12 +449,25 @@ class ReviewBottomSheet(
             })
         }
 
-        // 从配置获取API密钥和模型名称
+        // 从配置获取API密钥、URL和模型名称
         val apiKey = ApiConfigDialog.getApiKey(requireContext())
+        val apiUrl = ApiConfigDialog.getApiUrl(requireContext())
         val apiModel = ApiConfigDialog.getApiModel(requireContext())
 
         if (apiKey.isEmpty()) {
             return "API密钥未配置，请在菜单中选择\"添加API\"进行配置"
+        }
+
+        val requestUrl = if (apiUrl.isEmpty()) {
+            "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions"
+        } else {
+            // 如果配置的URL不包含 /v1/chat/completions，自动补全
+            if (!apiUrl.contains("/v1/chat/completions")) {
+                val baseUrl = apiUrl.trimEnd('/')
+                "$baseUrl/v1/chat/completions"
+            } else {
+                apiUrl
+            }
         }
 
         val requestBodyJson = JSONObject().apply {
@@ -453,37 +479,50 @@ class ReviewBottomSheet(
         val body = requestBodyJson.toString().toRequestBody("application/json; charset=utf-8".toMediaType())
 
         val request = Request.Builder()
-            .url("https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions")
+            .url(requestUrl)
             .addHeader("Authorization", "Bearer $apiKey")
             .addHeader("Content-Type", "application/json")
             .post(body)
             .build()
 
+        Log.d("MATCH_API", "API请求地址: ${request.url}")
+
         try {
             val response = client.newCall(request).execute()
             if (!response.isSuccessful) {
-                if (response.code == 401) {
-                    // 401错误，弹窗提示用户检查API配置
-                    withContext(Dispatchers.Main) {
-                        AlertDialog.Builder(requireContext())
-                            .setTitle("API认证失败")
-                            .setMessage("请求失败: 401\n\n请检查API Key是否正确配置")
-                            .setPositiveButton("去设置") { _, _ ->
-                                ApiConfigDialog.show(requireContext())
-                            }
-                            .setNegativeButton("取消", null)
-                            .show()
-                    }
+                val errorMsg = "请求失败: HTTP ${response.code}\n\n请检查API配置和网络连接"
+                withContext(Dispatchers.Main) {
+                    AlertDialog.Builder(requireContext())
+                        .setTitle("API请求失败")
+                        .setMessage(errorMsg)
+                        .setPositiveButton("去设置") { _, _ ->
+                            ApiConfigDialog.show(requireContext())
+                        }
+                        .setNegativeButton("取消", null)
+                        .show()
                 }
                 return "请求失败: ${response.code}"
             }
             val responseBody = response.body?.string() ?: return "响应为空"
+            Log.d("MATCH_API", "API响应内容: $responseBody")
             val jsonResponse = JSONObject(responseBody)
             return jsonResponse.getJSONArray("choices")
                 .getJSONObject(0)
                 .getJSONObject("message")
                 .getString("content")
         } catch (e: Exception) {
+            Log.e("MATCH_API", "请求异常: ${e.message}", e)
+            val errorMsg = "网络请求异常: ${e.message}\n\n请检查API地址是否正确配置"
+            withContext(Dispatchers.Main) {
+                AlertDialog.Builder(requireContext())
+                    .setTitle("API请求失败")
+                    .setMessage(errorMsg)
+                    .setPositiveButton("去设置") { _, _ ->
+                        ApiConfigDialog.show(requireContext())
+                    }
+                    .setNegativeButton("取消", null)
+                    .show()
+            }
             return "网络请求异常: ${e.message}"
         }
     }
