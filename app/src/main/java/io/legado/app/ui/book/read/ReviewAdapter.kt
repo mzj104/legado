@@ -1,7 +1,9 @@
 package io.legado.app.ui.book.read
 
 import android.graphics.Bitmap
+import android.graphics.Color
 import android.graphics.drawable.Drawable
+import android.graphics.drawable.GradientDrawable
 import android.text.Spannable
 import android.text.SpannableStringBuilder
 import android.text.style.ImageSpan
@@ -84,6 +86,7 @@ class ReviewAdapter(private val threads: List<ReviewThread>) :
         private val tvTime = view.findViewById<TextView>(R.id.tvTime)
         private val imgAvatar = view.findViewById<ImageView>(R.id.imgAvatar)
         private val imgReviewImage = view.findViewById<ImageView>(R.id.imgReviewImage)
+        private val tvEssence = view.findViewById<TextView>(R.id.tvEssence)
 
         private val likes = view.findViewById<TextView>(R.id.tvLike)
 
@@ -190,6 +193,32 @@ class ReviewAdapter(private val threads: List<ReviewThread>) :
                 .load(root.optString("avatar"))
                 .apply(RequestOptions().circleCrop())
                 .into(imgAvatar)
+
+            // 处理精华标签：essenceStatus == true 时显示
+            val essenceStatus = root.optBoolean("essenceStatus", false)
+            if (essenceStatus) {
+                tvEssence.visibility = View.VISIBLE
+                // 根据夜间模式设置颜色
+                if (isNightTheme) {
+                    // 夜间模式：低饱和度红色
+                    tvEssence.setTextColor(Color.parseColor("#CC6666"))
+                    val drawable = GradientDrawable()
+                    drawable.setStroke(1, Color.parseColor("#CC6666"))
+                    drawable.cornerRadius = 4f
+                    drawable.setColor(Color.TRANSPARENT)
+                    tvEssence.background = drawable
+                } else {
+                    // 白天模式：高饱和度红色
+                    tvEssence.setTextColor(Color.parseColor("#FF4444"))
+                    val drawable = GradientDrawable()
+                    drawable.setStroke(1, Color.parseColor("#FF4444"))
+                    drawable.cornerRadius = 4f
+                    drawable.setColor(Color.TRANSPARENT)
+                    tvEssence.background = drawable
+                }
+            } else {
+                tvEssence.visibility = View.GONE
+            }
 
             // 加载评论图片
             val imageUrl = root.optString("imageDetail", "")

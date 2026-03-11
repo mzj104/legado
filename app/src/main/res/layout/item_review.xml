@@ -14,13 +14,38 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <!-- 头像 -->
-        <ImageView
-            android:id="@+id/imgAvatar"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:scaleType="centerCrop"
-            android:layout_marginRight="10dp" />
+        <!-- 头像容器（包含头像和精华标签） -->
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="10dp"
+            android:gravity="center_horizontal">
+
+            <!-- 头像 -->
+            <ImageView
+                android:id="@+id/imgAvatar"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:scaleType="centerCrop" />
+
+            <!-- 精华标签 -->
+            <TextView
+                android:id="@+id/tvEssence"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="精华"
+                android:textColor="#FF4444"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:layout_marginTop="12dp"
+                android:paddingLeft="3dp"
+                android:paddingRight="3dp"
+                android:paddingTop="1dp"
+                android:paddingBottom="1dp"
+                android:background="@drawable/bg_essence_border"
+                android:visibility="gone" />
+        </LinearLayout>
 
         <!-- 右边的主评论内容 -->
         <LinearLayout
