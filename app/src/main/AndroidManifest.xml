@@ -281,6 +281,11 @@
         <activity
             android:name=".ui.book.cache.CacheActivity"
             android:launchMode="singleTop" />
+        <!-- API管理 -->
+        <activity
+            android:name=".ui.book.read.api.ApiManageActivity"
+            android:label="@string/api_manage"
+            android:launchMode="singleTop" />
         <!-- WebView界面 -->
         <activity
             android:name=".ui.browser.WebViewActivity"
