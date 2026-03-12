@@ -30,6 +30,7 @@ import io.legado.app.help.book.ContentProcessor
 import io.legado.app.help.config.AppConfig.isNightTheme
 import io.legado.app.model.ReadBook
 import io.legado.app.data.appDb
+import io.legado.app.ui.book.read.api.ApiConfigManager
 import io.legado.app.ui.book.read.page.ContentTextView
 import io.legado.app.ui.book.read.page.ReadView
 import io.legado.app.ui.book.read.page.ReaderBridge
@@ -492,10 +493,10 @@ class ReviewBottomSheet(
             })
         }
 
-        // 从配置获取API密钥、URL和模型名称
-        val apiKey = ApiConfigDialog.getApiKey(requireContext())
-        val apiUrl = ApiConfigDialog.getApiUrl(requireContext())
-        val apiModel = ApiConfigDialog.getApiModel(requireContext())
+        // 从ApiConfigManager获取API配置
+        val apiKey = ApiConfigManager.getApiKey(requireContext())
+        val apiUrl = ApiConfigManager.getApiUrl(requireContext())
+        val apiModel = ApiConfigManager.getApiModel(requireContext())
 
         if (apiKey.isEmpty()) {
             return "API密钥未配置，请在菜单中选择\"添加API\"进行配置"
