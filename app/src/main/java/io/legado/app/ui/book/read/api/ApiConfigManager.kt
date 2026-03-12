@@ -64,7 +64,7 @@ object ApiConfigManager {
             cachedConfigs = if (json.isNullOrEmpty()) {
                 mutableListOf()
             } else {
-                gson.fromJson(json, listType).toMutableList()
+                gson.fromJson<List<ApiConfig>>(json, listType).toMutableList()
             }
         }
         return cachedConfigs ?: emptyList()
