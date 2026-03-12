@@ -84,7 +84,9 @@ object ApiConfigManager {
         val configs = getApiConfigs().toMutableList()
         // 如果设置为默认，清除其他默认标记
         if (config.isDefault) {
-            configs.forEach { it.copy(isDefault = false) }
+            configs.forEachIndexed { index, it ->
+                configs[index] = it.copy(isDefault = false)
+            }
         }
         configs.add(config)
         saveConfigs(configs)
@@ -99,7 +101,9 @@ object ApiConfigManager {
         if (index != -1) {
             // 如果设置为默认，清除其他默认标记
             if (config.isDefault) {
-                configs.forEach { it.copy(isDefault = false) }
+                configs.forEachIndexed { index, it ->
+                    configs[index] = it.copy(isDefault = false)
+                }
             }
             configs[index] = config
             saveConfigs(configs)
