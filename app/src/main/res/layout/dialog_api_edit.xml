@@ -87,16 +87,16 @@
 
         <Button
             android:id="@+id/btn_cancel"
-            style="@style/Widget.Material3.Button.TextButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/cancel" />
+            android:text="@string/cancel"
+            style="?attr/materialButtonStyle"
+            android:layout_marginEnd="8dp" />
 
         <Button
             android:id="@+id/btn_save"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
             android:text="@string/action_save" />
 
     </LinearLayout>
