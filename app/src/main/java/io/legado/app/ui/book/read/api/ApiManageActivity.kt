@@ -10,7 +10,6 @@ import io.legado.app.R
 import io.legado.app.base.VMBaseActivity
 import io.legado.app.databinding.ActivityApiManageBinding
 import io.legado.app.lib.dialogs.alert
-import io.legado.app.utils.applyTint
 import io.legado.app.utils.toastOnUi
 import io.legado.app.utils.viewbindingdelegate.viewBinding
 import kotlinx.coroutines.launch
@@ -28,21 +27,24 @@ class ApiManageActivity : VMBaseActivity<ActivityApiManageBinding, ApiManageView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+    }
+
+    override fun onActivityCreated(savedInstanceState: Bundle?) {
         initView()
         observeData()
     }
 
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+    override fun onCompatCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.api_manage, menu)
-        menu.findItem(R.id.menu_add).applyTint(this)
-        return super.onCreateOptionsMenu(menu)
+        return true
     }
 
     override fun onCompatOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.menu_add -> addNewApi()
+            else -> return super.onCompatOptionsItemSelected(item)
         }
-        return super.onCompatOptionsItemSelected(item)
+        return true
     }
 
     private fun initView() {
@@ -89,7 +91,9 @@ class ApiManageActivity : VMBaseActivity<ActivityApiManageBinding, ApiManageView
                 viewModel.deleteApiConfig(config.id)
                 toastOnUi(R.string.delete_success)
             }
-            negativeButton()
+            negativeButton(R.string.cancel) {
+                // 取消，什么都不做
+            }
         }
     }
 

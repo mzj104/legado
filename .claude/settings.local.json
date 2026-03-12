@@ -2,7 +2,12 @@
   "permissions": {
     "allow": [
       "Bash(./gradlew:*)",
-      "Bash(gradlew.bat:*)"
+      "Bash(gradlew.bat:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(test:*)",
+      "Bash(grep:*)",
+      "Bash(xmllint:*)"
     ]
   }
 }

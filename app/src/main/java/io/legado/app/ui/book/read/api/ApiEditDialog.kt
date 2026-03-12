@@ -35,7 +35,7 @@ class ApiEditDialog : BottomSheetDialogFragment() {
         super.onViewCreated(view, savedInstanceState)
 
         // 设置标题
-        binding.titleBar.title = if (config == null) {
+        binding.tvTitle.text = if (config == null) {
             getString(R.string.add_api_config)
         } else {
             getString(R.string.edit_api_config)
@@ -50,9 +50,13 @@ class ApiEditDialog : BottomSheetDialogFragment() {
         }
 
         // 保存按钮
-        binding.titleBar.setTitleMenu(R.string.action_save) {
+        binding.btnSave.setOnClickListener {
             saveConfig()
-            true
+        }
+
+        // 取消按钮
+        binding.btnCancel.setOnClickListener {
+            dismiss()
         }
 
         // 实时验证

@@ -6,17 +6,20 @@
     android:orientation="vertical"
     android:padding="16dp">
 
-    <io.legado.app.ui.widget.TitleBar
-        android:id="@+id/title_bar"
-        android:layout_width="match_parent"
+    <TextView
+        android:id="@+id/tv_title"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:title="@string/add_api_config" />
+        android:text="@string/add_api_config"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="@color/primaryText" />
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/til_name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="16dp"
         android:hint="@string/api_name">
 
         <com.google.android.material.textfield.TextInputEditText
@@ -74,5 +77,28 @@
             android:maxLines="1" />
 
     </com.google.android.material.textfield.TextInputLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:orientation="horizontal"
+        android:gravity="end">
+
+        <Button
+            android:id="@+id/btn_cancel"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/cancel" />
+
+        <Button
+            android:id="@+id/btn_save"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="@string/action_save" />
+
+    </LinearLayout>
 
 </LinearLayout>
