@@ -9,11 +9,25 @@ plugins {
     alias libs.plugins.android.application
     alias libs.plugins.kotlin.android
     alias libs.plugins.kotlin.parcelize
+    id 'kotlin-kapt'
     alias libs.plugins.room
     alias libs.plugins.ksp
     alias libs.plugins.google.services
 }
 apply from: 'download.gradle'
+
+// Exclude glide-svg from KSP processing (incompatible with Glide 5.x)
+configurations {
+    ksp {
+        exclude group: 'com.github.qoqa', module: 'glide-svg'
+    }
+    kspTest {
+        exclude group: 'com.github.qoqa', module: 'glide-svg'
+    }
+    kspAndroidTest {
+        exclude group: 'com.github.qoqa', module: 'glide-svg'
+    }
+}
 
 static def releaseTime() {
     return new Date().format("yy.MMddHH", TimeZone.getTimeZone("GMT+8"))
@@ -126,7 +140,6 @@ android {
         arg("room.expandProjection", "true")
         arg("room.generateKotlin", "false")
         //arg("room.schemaLocation", "$projectDir/schemas")
-
     }
 
     compileOptions {
@@ -240,12 +253,15 @@ dependencies {
     //Glide
     implementation(libs.glide.glide)
     implementation(libs.glide.okhttp)
-    ksp(libs.glide.ksp)
+    kapt(libs.glide.compiler)
 
     //Svg
     implementation(libs.androidsvg)
     //Glide svg plugin
-    implementation(libs.glide.svg)
+    implementation(libs.glide.svg) {
+        exclude group: 'com.github.bumptech.glide', module: 'compiler'
+        exclude group: 'com.github.bumptech.glide', module: 'ksp'
+    }
 
     //webServer
     implementation(libs.nanohttpd.nanohttpd)

@@ -7,9 +7,19 @@ import kotlin.collections.get
 object Simicatalog {
     val idmap = mutableMapOf<Int, String>()
 
+    private var lastLocalIndex: Int? = null
+    private var lastQdIndex: Int? = null
+
+    data class Candidate(
+        val sim: Double,
+        val cid: String,
+        val title: String,
+        val index: Int
+    )
+
     fun get_qdchapter_id(title: String, index: Int): String? {
         if (title == "emptyTextChapter") return ""
-        // ---------- 1. 命中缓存 ----------
+
         idmap[index]?.let { return it }
 
         val qdcat = QdCat.getQdcatalog()
@@ -19,16 +29,15 @@ object Simicatalog {
         }
 
         val cleanedTitle = removeChapterTitle(keepAfterFirstSpace(title))
-        Log.d("BESTMATCH",title+" "+cleanedTitle)
+        Log.d("BESTMATCH", "$title $cleanedTitle")
+
         var bestSim = -1.0
         var bestCid: String? = null
         var bestTitle = ""
+        var bestQdIndex = -1
 
-        // 存储所有高相似度候选项
-        data class Candidate(val sim: Double, val cid: String, val title: String, val index: Int)
         val highSimCandidates = mutableListOf<Candidate>()
 
-        // ---------- 2. 遍历起点目录 ----------
         for (i in 0 until qdcat.length()) {
             val item = qdcat.getJSONObject(i)
 
@@ -38,37 +47,86 @@ object Simicatalog {
             if (t1.isBlank()) continue
 
             val sim = jaroWinklerSimilarity(t1, cleanedTitle)
+            val cid = item.getString("href")
 
             if (sim > bestSim) {
                 bestSim = sim
-                bestCid = item.getString("href")
+                bestCid = cid
                 bestTitle = t1
+                bestQdIndex = i
             }
 
-            // 收集高相似度候选项
             if (sim > 0.999) {
-                highSimCandidates.add(Candidate(sim, item.getString("href"), t1, i))
+                highSimCandidates.add(
+                    Candidate(
+                        sim = sim,
+                        cid = cid,
+                        title = t1,
+                        index = i
+                    )
+                )
             }
         }
 
-        // 如果存在多个高相似度候选项，选择与目标索引差值最小的
         if (highSimCandidates.isNotEmpty()) {
-            val bestCandidate = highSimCandidates.minByOrNull { kotlin.math.abs(it.index - index) }
+            val bestCandidate = chooseBestCandidateByLastOffset(
+                candidates = highSimCandidates,
+                localIndex = index
+            )
+
             if (bestCandidate != null) {
                 bestSim = bestCandidate.sim
                 bestCid = bestCandidate.cid
                 bestTitle = bestCandidate.title
+                bestQdIndex = bestCandidate.index
             }
         }
 
-        Log.d("BESTMATCH", "Local='$cleanedTitle' → Qidian='$bestTitle' sim=$bestSim")
+        Log.d(
+            "BESTMATCH",
+            "Local='$cleanedTitle' localIndex=$index → Qidian='$bestTitle' qdIndex=$bestQdIndex sim=$bestSim"
+        )
 
-        // ---------- 3. 避免写入 null / 空 ----------
-        if (bestCid != null && bestCid!!.isNotBlank()) {
-            idmap[index] = bestCid!!
+        if (!bestCid.isNullOrBlank()) {
+            idmap[index] = bestCid
+
+            if (bestQdIndex >= 0) {
+                lastLocalIndex = index
+                lastQdIndex = bestQdIndex
+            }
         }
 
         return bestCid
+    }
+
+    private fun chooseBestCandidateByLastOffset(
+        candidates: List<Candidate>,
+        localIndex: Int
+    ): Candidate? {
+        if (candidates.isEmpty()) return null
+
+        val lastLocal = lastLocalIndex
+        val lastQd = lastQdIndex
+
+        return if (lastLocal != null && lastQd != null) {
+            val offset = lastQd - lastLocal
+            val predictedQdIndex = localIndex + offset
+
+            Log.d(
+                "BESTMATCH",
+                "使用历史偏移匹配: lastLocal=$lastLocal lastQd=$lastQd offset=$offset predictedQdIndex=$predictedQdIndex"
+            )
+
+            candidates.minByOrNull {
+                kotlin.math.abs(it.index - predictedQdIndex)
+            }
+        } else {
+            Log.d("BESTMATCH", "无历史偏移，使用原始 index 接近逻辑")
+
+            candidates.minByOrNull {
+                kotlin.math.abs(it.index - localIndex)
+            }
+        }
     }
 
     fun jaroWinklerSimilarity(s1: String, s2: String): Double {
@@ -132,9 +190,16 @@ object Simicatalog {
     }
 
     fun removeChapterTitle(input: String): String {
-        val regex = Regex(
+        val bracketRegex = Regex("[（(【\\[][^）)】\\]]*[）)】\\]]")
+
+        val chapterRegex = Regex(
             "^\\s*(第[\\u4e00-\\u9fa5\\d]+(章|回|卷)?|[\\u4e00-\\u9fa5\\d]+)(?=\\s+[^\\d\\s])\\s*"
         )
-        return input.trim().replace(regex, "")
+
+        return input
+            .trim()
+            .replace(bracketRegex, "")
+            .replace(chapterRegex, "")
+            .trim()
     }
 }
