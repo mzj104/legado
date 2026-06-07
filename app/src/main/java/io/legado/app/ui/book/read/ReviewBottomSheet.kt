@@ -315,7 +315,7 @@ class ReviewBottomSheet(
                     // 收集所有子评论并按点赞数排序
                     val allReplies = mutableListOf<JSONObject>()
                     for (thread in threads) {
-                        allReplies.addAll(thread.replies)
+                        allReplies.addAll(thread.replies.toList())
                     }
                     allReplies.sortByDescending { it.optInt("likeCount") }
 

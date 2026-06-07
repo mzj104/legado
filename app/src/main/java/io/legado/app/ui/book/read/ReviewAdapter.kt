@@ -46,35 +46,48 @@ class ReviewAdapter(private val threads: List<ReviewThread>) :
         holder.bind(thread, expanded)
 
         holder.tvExpandReply?.setOnClickListener {
+            val adapterPosition = holder.bindingAdapterPosition
+            if (adapterPosition == RecyclerView.NO_POSITION) {
+                return@setOnClickListener
+            }
 
-            expandedSet.add(position)
+            expandedSet.add(adapterPosition)
 
             val root = thread.root
 
             // 需要加载子评论
-            if (!thread.repliesLoaded && root.optInt("rootReviewReplyCount") > 0) {
+            if (!thread.repliesLoaded && !thread.repliesLoading && root.optInt("rootReviewReplyCount") > 0) {
+                thread.repliesLoading = true
 
                 CoroutineScope(Dispatchers.IO).launch {
-                    val rootId = root.optString("reviewId")
-                    val replies = get_sub_review(rootId)
+                    try {
+                        val rootId = root.optString("reviewId")
+                        val replies = get_sub_review(rootId)
 
-                    thread.replies.clear()
-                    val sortedReplies = mutableListOf<JSONObject>()
-                    for (i in 0 until replies.length()) {
-                        sortedReplies.add(replies.getJSONObject(i))
-                    }
-                    // 按时间从早到晚排序
-                    sortedReplies.sortBy { it.optString("createTime") }
-                    thread.replies.addAll(sortedReplies)
-
-                    thread.repliesLoaded = true
-
-                    withContext(Dispatchers.Main) {
-                        notifyItemChanged(position)
+                        val sortedReplies = mutableListOf<JSONObject>()
+                        for (i in 0 until replies.length()) {
+                            sortedReplies.add(replies.getJSONObject(i))
+                        }
+                        // 按时间从早到晚排序
+                        sortedReplies.sortBy { it.optString("createTime") }
+                        withContext(Dispatchers.Main) {
+                            thread.replies = sortedReplies
+                            thread.repliesLoaded = true
+                            thread.repliesLoading = false
+                            notifyItemChanged(adapterPosition)
+                        }
+                    } catch (e: Exception) {
+                        if (e is CancellationException) {
+                            throw e
+                        }
+                        withContext(Dispatchers.Main) {
+                            thread.repliesLoading = false
+                            notifyItemChanged(adapterPosition)
+                        }
                     }
                 }
             } else {
-                notifyItemChanged(position)
+                notifyItemChanged(adapterPosition)
             }
         }
     }
@@ -262,7 +275,7 @@ class ReviewAdapter(private val threads: List<ReviewThread>) :
 // --- 子评论（最多显示 N 个，一条一条加进去） ---
                 layoutReply.removeAllViews()  // 清空旧的子评论
 
-                for (rep in thread.replies) {
+                for (rep in thread.replies.toList()) {
                     val child = LayoutInflater.from(itemView.context)
                         .inflate(R.layout.item_reply, layoutReply, false)
 
