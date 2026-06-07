@@ -105,7 +105,6 @@ class ReviewAdapter(private val threads: List<ReviewThread>) :
 
         val tvExpandReply = view.findViewById<TextView>(R.id.tvExpandReply)
         private val layoutReply = view.findViewById<LinearLayout>(R.id.layoutReply)
-        private val tvReplyContent = view.findViewById<TextView>(R.id.tvReplyContent)
         private val line = view.findViewById<View>(R.id.fgline)
 
         /**
@@ -268,7 +267,13 @@ class ReviewAdapter(private val threads: List<ReviewThread>) :
                 layoutReply.visibility = View.VISIBLE
 
                 if (!thread.repliesLoaded) {
-                    tvReplyContent.text = "加载中…"
+                    layoutReply.removeAllViews()
+                    val loadingView = TextView(itemView.context).apply {
+                        text = "加载中..."
+                        textSize = 14f
+                        setTextColor(if (isNightTheme) 0xFF999999.toInt() else 0xFF666666.toInt())
+                    }
+                    layoutReply.addView(loadingView)
                     return
                 }
 
